@@ -3,3 +3,4 @@ pandas
 matplotlib
 flask
 schedule
+apscheduler

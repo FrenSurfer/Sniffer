@@ -1,0 +1,275 @@
+ /* Styles de base */
+ body {
+    margin: 0;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+/* Style pour le conteneur du tableau */
+.table-container {
+    position: relative;
+    max-height: calc(100vh - 250px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: 20px 0;
+    width: 100%;
+}
+
+/* Style général du tableau */
+table {
+    position: relative;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 14px;
+    text-align: right;
+    background-color: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    border: 1px solid #dee2e6;
+    table-layout: fixed;
+}
+
+/* En-tête du tableau */
+thead {
+    position: sticky;
+    top: 0;
+    z-index: 1001;
+    background-color: #f8f9fa;
+}
+
+th {
+    position: sticky;
+    top: 0;
+    padding: 12px 15px;
+    font-weight: bold;
+    border: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+    overflow: visible;
+    min-width: 80px;
+    z-index: 1001;
+}
+
+th:after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    border-bottom: 1px solid #dee2e6;
+}
+
+td {
+    padding: 10px 15px;
+    border: 1px solid #dee2e6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 80px;
+}
+
+tbody {
+    position: relative;
+    z-index: 1000;
+}
+
+tr:nth-child(even) { background-color: #f8f9fa; }
+tr:hover { background-color: #f5f5f5; }
+
+/* Styles pour les liens et valeurs */
+th a {
+    color: #333;
+    text-decoration: none;
+    display: block;
+}
+th a:hover { color: #007bff; }
+
+.positive { color: #28a745; }
+.negative { color: #dc3545; }
+
+/* Style pour les cellules suspectes */
+td.suspicious {
+    background-color: rgba(255, 255, 0, 0.3) !important;
+    position: relative;
+}
+td.suspicious:hover {
+    background-color: rgba(255, 255, 0, 0.4) !important;
+}
+
+/* Styles pour les cases à cocher */
+input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+/* Styles pour la comparaison */
+.comparison-controls {
+    margin: 20px 0;
+}
+
+#compareButton {
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#compareButton:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+#selectedCount {
+    margin-left: 10px;
+    color: #666;
+}
+
+/* Styles pour la modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1002;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 1200px;
+    border-radius: 8px;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.close:hover { color: black; }
+
+/* Styles pour les tooltips */
+.tooltip {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 200px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1002;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -100px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 12px;
+    white-space: normal;
+    pointer-events: none;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Styles pour les filtres */
+.filters-panel {
+    background: #f8f9fa;
+    padding: 15px;
+    margin: 20px 0;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.filters-panel h3 {
+    margin: 0 0 10px 0;
+    font-size: 16px;
+}
+
+.filter-options {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.filter-options label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.filter-options input[type="number"] {
+    width: 120px;
+    padding: 4px 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+}
+
+#applyFilters {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#applyFilters:hover {
+    background-color: #218838;
+}
+
+/* Style pour le redimensionnement */
+.resizer {
+    position: absolute;
+    right: 0;
+    top: 0;
+    height: 100%;
+    width: 5px;
+    cursor: col-resize;
+    user-select: none;
+    z-index: 1001;
+}
+
+/* Styles pour la comparaison */
+.metric-toggles {
+    margin: 10px 0;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.metric-toggles label {
+    margin-right: 15px;
+    cursor: pointer;
+}
+
+.comparison-table tr.hidden {
+    display: none;
+}
+
+/* Style pour le contrôle de redimensionnement */
+.resizing {
+    cursor: col-resize;
+    user-select: none;
+}

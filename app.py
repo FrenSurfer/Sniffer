@@ -1,13 +1,16 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from api_client import BirdeyeAPIClient
 from data_processor import process_token_list
 import logging
+from apscheduler.schedulers.background import BackgroundScheduler
 
+# Configuration du logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
+# Configuration
 api_key = "7817826158dc4340acbb4468ab7af7a4"
 client = BirdeyeAPIClient(api_key)
 token_data = []
@@ -32,6 +35,11 @@ def fetch_token_data():
         logger.error(f"Erreur lors de la récupération des données: {str(e)}")
         logger.exception(e)
 
+# Configuration du scheduler pour mettre à jour les données
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=fetch_token_data, trigger="interval", minutes=5)
+scheduler.start()
+
 @app.route('/')
 def index():
     sort_by = request.args.get('sort', 'performance')
@@ -53,5 +61,7 @@ def compare_tokens():
     return jsonify(compared_tokens)
 
 if __name__ == '__main__':
+    # Récupération initiale des données
     fetch_token_data()
+    # Démarrage de l'application
     app.run(debug=True)
