@@ -124,32 +124,32 @@
             <thead>
                 <tr>
                     <th><input type="checkbox" id="selectAll"></th>
-                    <th><a href="?sort=symbol&order={{ 'asc' if sort_by == 'symbol' and sort_order == 'desc' else 'desc' }}">Symbole</a></th>
-                    <th><a href="?sort=name&order={{ 'asc' if sort_by == 'name' and sort_order == 'desc' else 'desc' }}">Nom</a></th>
-                    <th><a href="?sort=liquidity&order={{ 'asc' if sort_by == 'liquidity' and sort_order == 'desc' else 'desc' }}">Liq. ($)</a></th>
-                    <th><a href="?sort=v24hUSD&order={{ 'asc' if sort_by == 'v24hUSD' and sort_order == 'desc' else 'desc' }}">Vol. 24h ($)</a></th>
-                    <th><a href="?sort=mc&order={{ 'asc' if sort_by == 'mc' and sort_order == 'desc' else 'desc' }}">MCap ($)</a></th>
-                    <th><a href="?sort=v24hChangePercent&order={{ 'asc' if sort_by == 'v24hChangePercent' and sort_order == 'desc' else 'desc' }}" class="tooltip">
+                    <th><a href="#" data-column="symbol" onclick="sortTable('symbol'); return false;">Symbole</a></th>
+                    <th><a href="#" data-column="name" onclick="sortTable('name'); return false;">Nom</a></th>
+                    <th><a href="#" data-column="liquidity" onclick="sortTable('liquidity'); return false;">Liq. ($)</a></th>
+                    <th><a href="#" data-column="v24hUSD" onclick="sortTable('v24hUSD'); return false;">Vol. 24h ($)</a></th>
+                    <th><a href="#" data-column="mc" onclick="sortTable('mc'); return false;">MCap ($)</a></th>
+                    <th><a href="#" data-column="v24hChangePercent" onclick="sortTable('v24hChangePercent'); return false;" class="tooltip">
                         Δ Prix (%)
                         <span class="tooltiptext">Variation du prix sur 24h</span>
                     </a></th>
-                    <th><a href="?sort=volume_liquidity_ratio&order={{ 'asc' if sort_by == 'volume_liquidity_ratio' and sort_order == 'desc' else 'desc' }}" class="tooltip">
+                    <th><a href="#" data-column="volume_liquidity_ratio" onclick="sortTable('volume_liquidity_ratio'); return false;" class="tooltip">
                         Vol/Liq
                         <span class="tooltiptext">Volume 24h / Liquidité</span>
                     </a></th>
-                    <th><a href="?sort=volume_mc_ratio&order={{ 'asc' if sort_by == 'volume_mc_ratio' and sort_order == 'desc' else 'desc' }}" class="tooltip">
+                    <th><a href="#" data-column="volume_mc_ratio" onclick="sortTable('volume_mc_ratio'); return false;" class="tooltip">
                         Vol/MC
                         <span class="tooltiptext">Volume 24h / Market Cap</span>
                     </a></th>
-                    <th><a href="?sort=liquidity_mc_ratio&order={{ 'asc' if sort_by == 'liquidity_mc_ratio' and sort_order == 'desc' else 'desc' }}" class="tooltip">
+                    <th><a href="#" data-column="liquidity_mc_ratio" onclick="sortTable('liquidity_mc_ratio'); return false;" class="tooltip">
                         Liq/MC
                         <span class="tooltiptext">Liquidité / Market Cap</span>
                     </a></th>
-                    <th><a href="?sort=performance&order={{ 'asc' if sort_by == 'performance' and sort_order == 'desc' else 'desc' }}" class="tooltip">
+                    <th><a href="#" data-column="performance" onclick="sortTable('performance'); return false;" class="tooltip">
                         Score
                         <span class="tooltiptext">Score combiné basé sur les ratios</span>
                     </a></th>
-                    <th><a href="?sort=is_pump&order={{ 'asc' if sort_by == 'is_pump' and sort_order == 'desc' else 'desc' }}" class="tooltip">
+                    <th><a href="#" data-column="is_pump" onclick="sortTable('is_pump'); return false;" class="tooltip">
                         Pump
                         <span class="tooltiptext">Token avec adresse finissant par 'pump'</span>
                     </a></th>

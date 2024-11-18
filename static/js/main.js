@@ -13,6 +13,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const thresholdsPanel = document.getElementById('thresholdsPanel');
     const toggleWeightsButton = document.getElementById('toggleWeights');
     const weightsPanel = document.getElementById('weightsPanel');
+    let currentSortColumn = '';
+    let currentSortOrder = 'asc';
 
     // Fonctions utilitaires
     function parseNumericValue(value) {
@@ -20,6 +22,68 @@ document.addEventListener('DOMContentLoaded', function() {
             return parseFloat(value.replace(/[^\d.-]/g, '')) || 0;
         }
         return parseFloat(value) || 0;
+    }
+
+    // Fonction de tri
+    function sortTable(column) {
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        
+        if (currentSortColumn === column) {
+            currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
+        } else {
+            currentSortColumn = column;
+            currentSortOrder = 'asc';
+        }
+        
+        rows.sort((a, b) => {
+            let aValue = a.cells[getColumnIndex(column)].textContent.trim();
+            let bValue = b.cells[getColumnIndex(column)].textContent.trim();
+            
+            if (column === 'liquidity' || column === 'v24hUSD' || column === 'mc') {
+                aValue = parseNumericValue(aValue);
+                bValue = parseNumericValue(bValue);
+            } else if (column === 'v24hChangePercent' || column.includes('ratio')) {
+                aValue = parseFloat(aValue.replace(/[%+]/g, ''));
+                bValue = parseFloat(bValue.replace(/[%+]/g, ''));
+            }
+            
+            if (currentSortOrder === 'asc') {
+                return aValue > bValue ? 1 : -1;
+            } else {
+                return aValue < bValue ? 1 : -1;
+            }
+        });
+        
+        rows.forEach(row => tbody.appendChild(row));
+        updateSortIndicators(column);
+    }
+
+    function getColumnIndex(column) {
+        const columnMap = {
+            'symbol': 1,
+            'name': 2,
+            'liquidity': 3,
+            'v24hUSD': 4,
+            'mc': 5,
+            'v24hChangePercent': 6,
+            'volume_liquidity_ratio': 7,
+            'volume_mc_ratio': 8,
+            'liquidity_mc_ratio': 9,
+            'performance': 10,
+            'is_pump': 11
+        };
+        return columnMap[column];
+    }
+
+    function updateSortIndicators(column) {
+        const headers = table.querySelectorAll('th a');
+        headers.forEach(header => {
+            header.classList.remove('asc', 'desc');
+            if (header.dataset.column === column) {
+                header.classList.add(currentSortOrder);
+            }
+        });
     }
 
     // Gestion des filtres
@@ -31,30 +95,28 @@ document.addEventListener('DOMContentLoaded', function() {
             mcapMin: parseNumericValue(document.getElementById('minMc').value),
             mcapMax: parseNumericValue(document.getElementById('maxMc').value),
             suspicious: document.getElementById('filterSuspicious').checked,
-            hide24h: document.getElementById('filter24h').checked  // Ajout du filtre 24h
+            hide24h: document.getElementById('filter24h').checked
         };
         
         let visibleCount = 0;
         
         rows.forEach(row => {
-            // Extraire toutes les valeurs de la ligne
             const values = {
                 liquidity: parseNumericValue(row.cells[3].textContent),
                 volume: parseNumericValue(row.cells[4].textContent),
                 mcap: parseNumericValue(row.cells[5].textContent),
                 priceChange: parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, '')),
                 isSuspicious: row.querySelector('.suspicious') !== null,
-                isLessThan24h: parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, '')) === 0.00  // Détection token < 24h
+                isLessThan24h: parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, '')) === 0.00
             };
             
-            // Vérifier chaque filtre
             const meetsFilters = 
                 (filters.liquidity === 0 || values.liquidity >= filters.liquidity) &&
                 (filters.volume === 0 || values.volume >= filters.volume) &&
                 (filters.mcapMin === 0 || values.mcap >= filters.mcapMin) &&
                 (filters.mcapMax === 0 || values.mcap <= filters.mcapMax) &&
                 (!filters.suspicious || !values.isSuspicious) &&
-                (!filters.hide24h || !values.isLessThan24h);  // Filtre des tokens < 24h
+                (!filters.hide24h || !values.isLessThan24h);
             
             row.style.display = meetsFilters ? '' : 'none';
             if (meetsFilters) visibleCount++;
@@ -156,10 +218,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Event Listeners
-    document.getElementById('resetFilters').addEventListener('click', resetFilters);
-    
-    document.getElementById('applyFilters').addEventListener('click', applyFilters);
-
     toggleButton.addEventListener('click', () => {
         const isHidden = thresholdsPanel.style.display === 'none';
         thresholdsPanel.style.display = isHidden ? 'block' : 'none';
@@ -170,6 +228,39 @@ document.addEventListener('DOMContentLoaded', function() {
         const isHidden = weightsPanel.style.display === 'none';
         weightsPanel.style.display = isHidden ? 'block' : 'none';
         toggleWeightsButton.textContent = `Coefficients du Score ${isHidden ? '▼' : '▲'}`;
+    });
+
+    filterButton.addEventListener('click', applyFilters);
+    document.getElementById('resetFilters').addEventListener('click', resetFilters);
+
+    // Event Listeners pour les seuils de détection
+    const thresholdInputs = [
+        'priceChangeMin',
+        'priceChangeMax',
+        'volLiqThreshold',
+        'volMcThreshold',
+        'liqMcThreshold'
+    ];
+
+    thresholdInputs.forEach(id => {
+        document.getElementById(id).addEventListener('change', updateSuspiciousHighlight);
+    });
+
+    // Event listener pour le bouton d'application des coefficients
+    document.getElementById('applyWeights').addEventListener('click', updateWeightTotal);
+
+    // Event listeners pour les inputs de poids
+    const weightInputs = [
+        'priceChangeWeight',
+        'volumeWeight',
+        'liquidityWeight',
+        'volLiqWeight',
+        'volMcWeight',
+        'liqMcWeight'
+    ];
+
+    weightInputs.forEach(id => {
+        document.getElementById(id).addEventListener('input', updateWeightTotal);
     });
 
     // Gestion de la comparaison
@@ -207,90 +298,89 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             const tokens = await response.json();
-        
-        // Créer le tableau de comparaison
-        let comparisonHTML = `
-            <div class="comparison-controls">
-                <div class="metric-toggles">
-                    <label><input type="checkbox" data-metric="liquidity" checked> Liquidité</label>
-                    <label><input type="checkbox" data-metric="volume" checked> Volume 24h</label>
-                    <label><input type="checkbox" data-metric="mcap" checked> Market Cap</label>
-                    <label><input type="checkbox" data-metric="price" checked> Variation Prix</label>
-                    <label><input type="checkbox" data-metric="vol-liq" checked> Vol/Liq</label>
-                    <label><input type="checkbox" data-metric="vol-mc" checked> Vol/MC</label>
-                    <label><input type="checkbox" data-metric="liq-mc" checked> Liq/MC</label>
-                    <label><input type="checkbox" data-metric="score" checked> Score</label>
+            
+            let comparisonHTML = `
+                <div class="comparison-controls">
+                    <div class="metric-toggles">
+                        <label><input type="checkbox" data-metric="liquidity" checked> Liquidité</label>
+                        <label><input type="checkbox" data-metric="volume" checked> Volume 24h</label>
+                        <label><input type="checkbox" data-metric="mcap" checked> Market Cap</label>
+                        <label><input type="checkbox" data-metric="price" checked> Variation Prix</label>
+                        <label><input type="checkbox" data-metric="vol-liq" checked> Vol/Liq</label>
+                        <label><input type="checkbox" data-metric="vol-mc" checked> Vol/MC</label>
+                        <label><input type="checkbox" data-metric="liq-mc" checked> Liq/MC</label>
+                        <label><input type="checkbox" data-metric="score" checked> Score</label>
+                    </div>
                 </div>
-            </div>
-            <table>
-                <tr class="header-row">
-                    <th>Métrique</th>
-                    ${tokens.map(t => `<th>${t.symbol}</th>`).join('')}
-                </tr>
-                <tr class="metric-row" data-metric="liquidity">
-                    <td>Liquidité ($)</td>
-                    ${tokens.map(t => `<td>${t.liquidity.toLocaleString()}</td>`).join('')}
-                </tr>
-                <tr class="metric-row" data-metric="volume">
-                    <td>Volume 24h ($)</td>
-                    ${tokens.map(t => `<td>${t.v24hUSD.toLocaleString()}</td>`).join('')}
-                </tr>
-                <tr class="metric-row" data-metric="mcap">
-                    <td>Market Cap ($)</td>
-                    ${tokens.map(t => `<td>${t.mc.toLocaleString()}</td>`).join('')}
-                </tr>
-                <tr class="metric-row" data-metric="price">
-                    <td>Variation Prix (%)</td>
-                    ${tokens.map(t => `<td class="${t.v24hChangePercent > 0 ? 'positive' : 'negative'}">${t.v24hChangePercent.toFixed(2)}%</td>`).join('')}
-                </tr>
-                <tr class="metric-row" data-metric="vol-liq">
-                    <td>Vol/Liq Ratio</td>
-                    ${tokens.map(t => `<td>${t.volume_liquidity_ratio.toFixed(2)}</td>`).join('')}
-                </tr>
-                <tr class="metric-row" data-metric="vol-mc">
-                    <td>Vol/MC Ratio</td>
-                    ${tokens.map(t => `<td>${t.volume_mc_ratio.toFixed(2)}</td>`).join('')}
-                </tr>
-                <tr class="metric-row" data-metric="liq-mc">
-                    <td>Liq/MC Ratio</td>
-                    ${tokens.map(t => `<td>${t.liquidity_mc_ratio.toFixed(2)}</td>`).join('')}
-                </tr>
-                <tr class="metric-row" data-metric="score">
-                    <td>Score</td>
-                    ${tokens.map(t => `<td>${t.performance.toFixed(2)}</td>`).join('')}
-                </tr>
-            </table>
-        `;
-        
-        document.getElementById('comparisonTable').innerHTML = comparisonHTML;
-        modal.style.display = 'block';  // Ajout de cette ligne pour afficher le modal
+                <table>
+                    <tr class="header-row">
+                        <th>Métrique</th>
+                        ${tokens.map(t => `<th>${t.symbol}</th>`).join('')}
+                    </tr>
+                    <tr class="metric-row" data-metric="liquidity">
+                        <td>Liquidité ($)</td>
+                        ${tokens.map(t => `<td>${t.liquidity.toLocaleString()}</td>`).join('')}
+                    </tr>
+                    <tr class="metric-row" data-metric="volume">
+                        <td>Volume 24h ($)</td>
+                        ${tokens.map(t => `<td>${t.v24hUSD.toLocaleString()}</td>`).join('')}
+                    </tr>
+                    <tr class="metric-row" data-metric="mcap">
+                        <td>Market Cap ($)</td>
+                        ${tokens.map(t => `<td>${t.mc.toLocaleString()}</td>`).join('')}
+                    </tr>
+                    <tr class="metric-row" data-metric="price">
+                        <td>Variation Prix (%)</td>
+                        ${tokens.map(t => `<td class="${t.v24hChangePercent > 0 ? 'positive' : 'negative'}">${t.v24hChangePercent.toFixed(2)}%</td>`).join('')}
+                    </tr>
+                    <tr class="metric-row" data-metric="vol-liq">
+                        <td>Vol/Liq Ratio</td>
+                        ${tokens.map(t => `<td>${t.volume_liquidity_ratio.toFixed(2)}</td>`).join('')}
+                    </tr>
+                    <tr class="metric-row" data-metric="vol-mc">
+                        <td>Vol/MC Ratio</td>
+                        ${tokens.map(t => `<td>${t.volume_mc_ratio.toFixed(2)}</td>`).join('')}
+                    </tr>
+                    <tr class="metric-row" data-metric="liq-mc">
+                        <td>Liq/MC Ratio</td>
+                        ${tokens.map(t => `<td>${t.liquidity_mc_ratio.toFixed(2)}</td>`).join('')}
+                    </tr>
+                    <tr class="metric-row" data-metric="score">
+                        <td>Score</td>
+                        ${tokens.map(t => `<td>${t.performance.toFixed(2)}</td>`).join('')}
+                    </tr>
+                </table>
+            `;
+            
+            document.getElementById('comparisonTable').innerHTML = comparisonHTML;
+            modal.style.display = 'block';
 
-        // Ajouter les event listeners pour les toggles
-        document.querySelectorAll('.metric-toggles input[type="checkbox"]').forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                const metric = this.dataset.metric;
-                const row = document.querySelector(`tr[data-metric="${metric}"]`);
-                if (row) {
-                    row.style.display = this.checked ? '' : 'none';
-                }
+            // Ajouter les event listeners pour les toggles
+            document.querySelectorAll('.metric-toggles input[type="checkbox"]').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const metric = this.dataset.metric;
+                    const row = document.querySelector(`tr[data-metric="${metric}"]`);
+                    if (row) {
+                        row.style.display = this.checked ? '' : 'none';
+                    }
+                });
             });
-        });
-        
-    } catch (error) {
-        console.error('Erreur lors de la comparaison:', error);
-    }
-});
+            
+        } catch (error) {
+            console.error('Erreur lors de la comparaison:', error);
+        }
+    });
 
-// Fermeture du modal
-closeBtn.addEventListener('click', () => {
-    modal.style.display = 'none';
-});
-
-window.addEventListener('click', (event) => {
-    if (event.target === modal) {
+    // Fermeture du modal
+    closeBtn.addEventListener('click', () => {
         modal.style.display = 'none';
-    }
-});
+    });
+
+    window.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
 
     // Initialisation
     function init() {
