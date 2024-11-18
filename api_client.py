@@ -30,11 +30,11 @@ class BirdeyeAPIClient:
             logger.error(f"Erreur API: {str(e)}")
             return {"success": False, "error": str(e)}
 
-    def get_all_tokens(self, total_desired=200):
+    def get_all_tokens(self, total_desired=500):
         all_tokens = []
         offset = 0
-        limit = 50  # Maximum permis par l'API
-
+        limit = 50  # L'API n'accepte que 50 maximum par requête
+        
         while len(all_tokens) < total_desired:
             logger.info(f"Récupération des tokens {offset} à {offset + limit}...")
             response = self.get_token_list(offset=offset, limit=limit)
@@ -43,15 +43,14 @@ class BirdeyeAPIClient:
                 logger.error(f"Erreur lors de la récupération des tokens: {response.get('error')}")
                 break
                 
-            tokens = response['data']['tokens']
+            tokens = response.get('data', {}).get('tokens', [])
             if not tokens:  # Plus de tokens disponibles
                 break
                 
             all_tokens.extend(tokens)
             offset += limit
             
-            # Pause pour éviter de surcharger l'API
-            time.sleep(1)
+            time.sleep(1)  # Pause pour éviter de surcharger l'API
             
             if len(all_tokens) >= total_desired:
                 all_tokens = all_tokens[:total_desired]

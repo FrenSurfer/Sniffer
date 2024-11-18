@@ -15,10 +15,17 @@ api_key = "7817826158dc4340acbb4468ab7af7a4"
 client = BirdeyeAPIClient(api_key)
 token_data = []
 
-def fetch_token_data():
-    logger.info("Récupération des données des tokens...")
+# Options de tri disponibles pour l'API
+SORT_OPTIONS = {
+    'volume': 'Volume 24h',
+    'liquidity': 'Liquidité',
+    'mcap': 'Market Cap'
+}
+
+def fetch_token_data(sort_by='volume'):
+    logger.info(f"Récupération des données des tokens (tri par {sort_by})...")
     try:
-        tokens = client.get_all_tokens(total_desired=200)
+        tokens = client.get_all_tokens(total_desired=500)
         
         if not tokens:
             logger.error("Aucun token récupéré")
@@ -35,15 +42,16 @@ def fetch_token_data():
         logger.error(f"Erreur lors de la récupération des données: {str(e)}")
         logger.exception(e)
 
-# Configuration du scheduler pour mettre à jour les données
-scheduler = BackgroundScheduler()
-scheduler.add_job(func=fetch_token_data, trigger="interval", minutes=5)
-scheduler.start()
-
 @app.route('/')
 def index():
     sort_by = request.args.get('sort', 'performance')
     sort_order = request.args.get('order', 'desc')
+    api_sort = request.args.get('api_sort', 'volume')
+    
+    # Si le tri API a changé, rafraîchir les données
+    if api_sort != getattr(app, 'current_api_sort', None):
+        app.current_api_sort = api_sort
+        fetch_token_data(api_sort)
     
     sorted_data = sorted(token_data, 
                         key=lambda x: float(x.get(sort_by, 0) or 0),
@@ -52,7 +60,9 @@ def index():
     return render_template('index.html', 
                          tokens=sorted_data, 
                          sort_by=sort_by, 
-                         sort_order=sort_order)
+                         sort_order=sort_order,
+                         api_sort=api_sort,
+                         sort_options=SORT_OPTIONS)
 
 @app.route('/compare', methods=['POST'])
 def compare_tokens():
@@ -61,7 +71,18 @@ def compare_tokens():
     return jsonify(compared_tokens)
 
 if __name__ == '__main__':
-    # Récupération initiale des données
-    fetch_token_data()
-    # Démarrage de l'application
-    app.run(debug=True)
+    # Initialiser les données une seule fois au démarrage
+    app.current_api_sort = 'volume'
+    fetch_token_data(app.current_api_sort)
+    
+    # Configurer le scheduler pour les mises à jour
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(
+        func=lambda: fetch_token_data(app.current_api_sort), 
+        trigger="interval", 
+        minutes=10
+    )
+    scheduler.start()
+    
+    # Démarrer Flask sans le mode debug
+    app.run(debug=False)

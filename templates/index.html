@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <h1>Analyse des Tokens Solana</h1>
+    
     
     <!-- Contrôles -->
     <div id="controls">
@@ -75,6 +75,46 @@
             </label>
         </div>
         <button id="applyFilters">Appliquer les filtres</button>
+    </div>
+
+    <div class="filter-stats">
+        <span id="visibleCount">{{ tokens|length }} tokens affichés</span>
+        <button id="resetFilters" class="reset-button">Réinitialiser les filtres</button>
+    </div>
+    <div class="score-weights-container">
+        <button id="toggleWeights" class="toggle-button">
+            Coefficients du Score ▼
+        </button>
+        <div class="score-weights" id="weightsPanel" style="display: none;">
+            <div class="weight-options">
+                <label>
+                    Variation prix
+                    <input type="number" id="priceChangeWeight" value="0.15" step="0.05" min="0" max="1">
+                </label>
+                <label>
+                    Volume
+                    <input type="number" id="volumeWeight" value="0.15" step="0.05" min="0" max="1">
+                </label>
+                <label>
+                    Liquidité
+                    <input type="number" id="liquidityWeight" value="0.15" step="0.05" min="0" max="1">
+                </label>
+                <label>
+                    Ratio Vol/Liq
+                    <input type="number" id="volLiqWeight" value="0.20" step="0.05" min="0" max="1">
+                </label>
+                <label>
+                    Ratio Vol/MC
+                    <input type="number" id="volMcWeight" value="0.20" step="0.05" min="0" max="1">
+                </label>
+                <label>
+                    Ratio Liq/MC
+                    <input type="number" id="liqMcWeight" value="0.15" step="0.05" min="0" max="1">
+                </label>
+            </div>
+            <div class="weight-total">Total: <span id="weightTotal">1.00</span></div>
+            <button id="applyWeights">Appliquer les coefficients</button>
+        </div>
     </div>
 
     <!-- Contrôles de comparaison -->
