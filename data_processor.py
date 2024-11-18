@@ -44,7 +44,8 @@ def process_token_list(token_list, score_weights=None):
     excluded_symbols = [
         'USDT', 'USDC',  # Stablecoins
         'mSOL', 'WBTC', 'cbBTC', 'SOL', 'BNSOL', 'bSOL', 'LP-SOLAYER', 'hubSOL', 'PYUSD',  # Wrapped tokens
-        'JLP',  # LP tokens
+        'JLP', 
+        'bbSOL', # LP tokens
         'JitoSOL', 'JupSOL'  # Staked tokens
     ]
     

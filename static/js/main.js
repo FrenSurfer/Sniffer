@@ -191,59 +191,71 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Gestion du modal de comparaison
-compareButton.addEventListener('click', async function() {
-    const selectedAddresses = Array.from(document.querySelectorAll('.token-select:checked'))
-        .map(checkbox => checkbox.dataset.address);
-    
-    if (selectedAddresses.length < 2) return;
-    
-    try {
-        const response = await fetch('/compare', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ addresses: selectedAddresses })
-        });
+    compareButton.addEventListener('click', async function() {
+        const selectedAddresses = Array.from(document.querySelectorAll('.token-select:checked'))
+            .map(checkbox => checkbox.dataset.address);
         
-        const tokens = await response.json();
+        if (selectedAddresses.length < 2) return;
+        
+        try {
+            const response = await fetch('/compare', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ addresses: selectedAddresses })
+            });
+            
+            const tokens = await response.json();
         
         // Créer le tableau de comparaison
         let comparisonHTML = `
+            <div class="comparison-controls">
+                <div class="metric-toggles">
+                    <label><input type="checkbox" data-metric="liquidity" checked> Liquidité</label>
+                    <label><input type="checkbox" data-metric="volume" checked> Volume 24h</label>
+                    <label><input type="checkbox" data-metric="mcap" checked> Market Cap</label>
+                    <label><input type="checkbox" data-metric="price" checked> Variation Prix</label>
+                    <label><input type="checkbox" data-metric="vol-liq" checked> Vol/Liq</label>
+                    <label><input type="checkbox" data-metric="vol-mc" checked> Vol/MC</label>
+                    <label><input type="checkbox" data-metric="liq-mc" checked> Liq/MC</label>
+                    <label><input type="checkbox" data-metric="score" checked> Score</label>
+                </div>
+            </div>
             <table>
-                <tr>
+                <tr class="header-row">
                     <th>Métrique</th>
                     ${tokens.map(t => `<th>${t.symbol}</th>`).join('')}
                 </tr>
-                <tr>
+                <tr class="metric-row" data-metric="liquidity">
                     <td>Liquidité ($)</td>
                     ${tokens.map(t => `<td>${t.liquidity.toLocaleString()}</td>`).join('')}
                 </tr>
-                <tr>
+                <tr class="metric-row" data-metric="volume">
                     <td>Volume 24h ($)</td>
                     ${tokens.map(t => `<td>${t.v24hUSD.toLocaleString()}</td>`).join('')}
                 </tr>
-                <tr>
+                <tr class="metric-row" data-metric="mcap">
                     <td>Market Cap ($)</td>
                     ${tokens.map(t => `<td>${t.mc.toLocaleString()}</td>`).join('')}
                 </tr>
-                <tr>
+                <tr class="metric-row" data-metric="price">
                     <td>Variation Prix (%)</td>
                     ${tokens.map(t => `<td class="${t.v24hChangePercent > 0 ? 'positive' : 'negative'}">${t.v24hChangePercent.toFixed(2)}%</td>`).join('')}
                 </tr>
-                <tr>
+                <tr class="metric-row" data-metric="vol-liq">
                     <td>Vol/Liq Ratio</td>
                     ${tokens.map(t => `<td>${t.volume_liquidity_ratio.toFixed(2)}</td>`).join('')}
                 </tr>
-                <tr>
+                <tr class="metric-row" data-metric="vol-mc">
                     <td>Vol/MC Ratio</td>
                     ${tokens.map(t => `<td>${t.volume_mc_ratio.toFixed(2)}</td>`).join('')}
                 </tr>
-                <tr>
+                <tr class="metric-row" data-metric="liq-mc">
                     <td>Liq/MC Ratio</td>
                     ${tokens.map(t => `<td>${t.liquidity_mc_ratio.toFixed(2)}</td>`).join('')}
                 </tr>
-                <tr>
+                <tr class="metric-row" data-metric="score">
                     <td>Score</td>
                     ${tokens.map(t => `<td>${t.performance.toFixed(2)}</td>`).join('')}
                 </tr>
@@ -251,7 +263,18 @@ compareButton.addEventListener('click', async function() {
         `;
         
         document.getElementById('comparisonTable').innerHTML = comparisonHTML;
-        modal.style.display = 'block';
+        modal.style.display = 'block';  // Ajout de cette ligne pour afficher le modal
+
+        // Ajouter les event listeners pour les toggles
+        document.querySelectorAll('.metric-toggles input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const metric = this.dataset.metric;
+                const row = document.querySelector(`tr[data-metric="${metric}"]`);
+                if (row) {
+                    row.style.display = this.checked ? '' : 'none';
+                }
+            });
+        });
         
     } catch (error) {
         console.error('Erreur lors de la comparaison:', error);
