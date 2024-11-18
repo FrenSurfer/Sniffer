@@ -9,12 +9,83 @@ document.addEventListener('DOMContentLoaded', function() {
     const closeBtn = document.querySelector('.close');
     const tokenCheckboxes = document.querySelectorAll('.token-select');
     const filterButton = document.getElementById('applyFilters');
+    const toggleButton = document.getElementById('toggleThresholds');
+    const thresholdsPanel = document.getElementById('thresholdsPanel');
 
-    // Gestion du redimensionnement des colonnes
+    // Variables pour le redimensionnement
     let isResizing = false;
     let currentTh = null;
     let startX = 0;
     let startWidth = 0;
+
+    // Gestion du panneau des seuils
+    toggleButton.addEventListener('click', function() {
+        const isHidden = thresholdsPanel.style.display === 'none';
+        thresholdsPanel.style.display = isHidden ? 'block' : 'none';
+        toggleButton.textContent = `Seuils de détection ${isHidden ? '▼' : '▲'}`;
+    });
+
+    // Mise à jour des seuils suspects
+    function updateSuspiciousHighlight() {
+        const priceChangeMin = parseFloat(document.getElementById('priceChangeMin').value);
+        const priceChangeMax = parseFloat(document.getElementById('priceChangeMax').value);
+        const volLiqThreshold = parseFloat(document.getElementById('volLiqThreshold').value);
+        const volMcThreshold = parseFloat(document.getElementById('volMcThreshold').value);
+        const liqMcThreshold = parseFloat(document.getElementById('liqMcThreshold').value);
+
+        document.querySelectorAll('tbody tr').forEach(row => {
+            const priceChange = parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, ''));
+            const volLiqRatio = parseFloat(row.cells[7].textContent);
+            const volMcRatio = parseFloat(row.cells[8].textContent);
+            const liqMcRatio = parseFloat(row.cells[9].textContent);
+
+            row.cells[6].classList.toggle('suspicious', 
+                priceChange < priceChangeMin || priceChange > priceChangeMax);
+            row.cells[7].classList.toggle('suspicious', 
+                volLiqRatio > volLiqThreshold);
+            row.cells[8].classList.toggle('suspicious', 
+                volMcRatio > volMcThreshold);
+            row.cells[9].classList.toggle('suspicious', 
+                liqMcRatio < liqMcThreshold);
+        });
+
+        // Sauvegarder les seuils
+        saveThresholds();
+    }
+
+    // Sauvegarder les seuils dans localStorage
+    function saveThresholds() {
+        const thresholds = {
+            priceChangeMin: document.getElementById('priceChangeMin').value,
+            priceChangeMax: document.getElementById('priceChangeMax').value,
+            volLiqThreshold: document.getElementById('volLiqThreshold').value,
+            volMcThreshold: document.getElementById('volMcThreshold').value,
+            liqMcThreshold: document.getElementById('liqMcThreshold').value
+        };
+        localStorage.setItem('tokenThresholds', JSON.stringify(thresholds));
+    }
+
+    // Restaurer les seuils depuis localStorage
+    function restoreThresholds() {
+        const thresholds = JSON.parse(localStorage.getItem('tokenThresholds'));
+        if (thresholds) {
+            document.getElementById('priceChangeMin').value = thresholds.priceChangeMin;
+            document.getElementById('priceChangeMax').value = thresholds.priceChangeMax;
+            document.getElementById('volLiqThreshold').value = thresholds.volLiqThreshold;
+            document.getElementById('volMcThreshold').value = thresholds.volMcThreshold;
+            document.getElementById('liqMcThreshold').value = thresholds.liqMcThreshold;
+            updateSuspiciousHighlight();
+        }
+    }
+
+    // Event listeners pour les seuils
+    document.querySelectorAll('#thresholdsPanel input').forEach(input => {
+        input.addEventListener('change', updateSuspiciousHighlight);
+    });
+// Ajouter les event listeners pour les seuils
+document.querySelectorAll('#thresholdsPanel input').forEach(input => {
+    input.addEventListener('change', updateSuspiciousHighlight);
+});
 
     document.querySelectorAll('th').forEach(th => {
         const resizer = document.createElement('div');
@@ -241,4 +312,5 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialisation
     restoreColumnWidths();
     restoreFilters();
+    restoreThresholds();
 });

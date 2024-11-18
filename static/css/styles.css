@@ -273,3 +273,38 @@ input[type="checkbox"] {
     cursor: col-resize;
     user-select: none;
 }
+
+.suspicious-thresholds-container {
+    margin-bottom: 15px;
+}
+
+.toggle-button {
+    width: 100%;
+    padding: 8px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.toggle-button:hover {
+    background-color: #e9ecef;
+}
+
+.suspicious-thresholds {
+    background: #fff;
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    margin-top: 5px;
+}
+
+.threshold-inputs {
+    display: flex;
+    gap: 10px;
+}
+
+.threshold-inputs input {
+    width: 80px;
+}
