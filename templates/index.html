@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyse des Tokens Solana</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            font-size: 14px;
+            table-layout: fixed;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: right;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        th {
+            position: relative;
+            background-color: #f2f2f2;
+            cursor: pointer;
+            text-align: center;
+            padding: 10px 5px;
+            user-select: none;
+        }
+        th a {
+            color: #000;
+            text-decoration: none;
+            display: block;
+            width: 100%;
+            padding: 8px 4px;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        td:first-child, td:nth-child(2) {
+            text-align: left;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            text-align: center;
+            padding: 5px;
+            border-radius: 6px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+            white-space: normal;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .negative {
+            color: red;
+        }
+        .positive {
+            color: green;
+        }
+        .number-header {
+            text-align: right;
+        }
+        .resizer {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 5px;
+            height: 100%;
+            background-color: #ddd;
+            cursor: col-resize;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        th:hover .resizer {
+            opacity: 1;
+        }
+        .resizing {
+            cursor: col-resize;
+            user-select: none;
+        }
+        #controls {
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 5px;
+        }
+        button {
+            padding: 8px 15px;
+            background-color: #f2f2f2;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #e6e6e6;
+        }
+        /* Style pour la colonne Pump */
+        td:nth-child(3) {
+            text-align: center;
+            color: #4CAF50;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        td:nth-child(11) {
+        text-align: center;
+        color: #4CAF50;
+        font-weight: bold;
+        font-size: 16px;
+    }
+    tr.suspicious {
+        background-color: rgba(255, 255, 0, 0.2) !important; /* Jaune transparent */
+    }
+    
+    tr.suspicious:hover {
+        background-color: rgba(255, 255, 0, 0.3) !important;
+    }
+    
+    /* Pour garder le style alterné même avec les lignes suspectes */
+    tr.suspicious:nth-child(even) {
+        background-color: rgba(255, 255, 0, 0.15) !important;
+    }
+        
+        /* Ajustement des largeurs des colonnes */
+        th:nth-child(1), td:nth-child(1) { width: 8%; }  /* Symbole */
+        th:nth-child(2), td:nth-child(2) { width: 12%; } /* Nom */
+        th:nth-child(3), td:nth-child(3) { width: 10%; } /* Liquidité */
+        th:nth-child(4), td:nth-child(4) { width: 10%; } /* Volume 24h */
+        th:nth-child(5), td:nth-child(5) { width: 10%; } /* Market Cap */
+        th:nth-child(6), td:nth-child(6) { width: 8%; }  /* Var. Prix */
+        th:nth-child(7), td:nth-child(7) { width: 9%; }  /* Vol/Liq */
+        th:nth-child(8), td:nth-child(8) { width: 9%; }  /* Vol/MC */
+        th:nth-child(9), td:nth-child(9) { width: 9%; }  /* Liq/MC */
+        th:nth-child(10), td:nth-child(10) { width: 10%; } /* Score */
+        th:nth-child(11), td:nth-child(11) { width: 5%; } /* Score */
+    </style>
+</head>
+<body>
+    <h1>Analyse des Tokens Solana</h1>
+    
+    <div id="controls">
+        <button onclick="localStorage.removeItem('columnWidths'); location.reload();">
+            Réinitialiser les largeurs
+        </button>
+    </div>
+
+    {% if tokens %}
+        <table>
+            <thead>
+                <tr>
+                    <th><a href="?sort=symbol&order={{ 'asc' if sort_by == 'symbol' and sort_order == 'desc' else 'desc' }}">Symbole</a></th>
+                    <th><a href="?sort=name&order={{ 'asc' if sort_by == 'name' and sort_order == 'desc' else 'desc' }}">Nom</a></th>
+                    <th><a href="?sort=liquidity&order={{ 'asc' if sort_by == 'liquidity' and sort_order == 'desc' else 'desc' }}">Liq. ($)</a></th>
+                    <th><a href="?sort=v24hUSD&order={{ 'asc' if sort_by == 'v24hUSD' and sort_order == 'desc' else 'desc' }}">Vol. 24h ($)</a></th>
+                    <th><a href="?sort=mc&order={{ 'asc' if sort_by == 'mc' and sort_order == 'desc' else 'desc' }}">MCap ($)</a></th>
+                    <th><a href="?sort=v24hChangePercent&order={{ 'asc' if sort_by == 'v24hChangePercent' and sort_order == 'desc' else 'desc' }}" class="tooltip">
+                        Δ Prix (%)
+                        <span class="tooltiptext">Variation du prix sur 24h</span>
+                    </a></th>
+                    <th><a href="?sort=volume_liquidity_ratio&order={{ 'asc' if sort_by == 'volume_liquidity_ratio' and sort_order == 'desc' else 'desc' }}" class="tooltip">
+                        Vol/Liq
+                        <span class="tooltiptext">Volume 24h / Liquidité</span>
+                    </a></th>
+                    <th><a href="?sort=volume_mc_ratio&order={{ 'asc' if sort_by == 'volume_mc_ratio' and sort_order == 'desc' else 'desc' }}" class="tooltip">
+                        Vol/MC
+                        <span class="tooltiptext">Volume 24h / Market Cap</span>
+                    </a></th>
+                    <th><a href="?sort=liquidity_mc_ratio&order={{ 'asc' if sort_by == 'liquidity_mc_ratio' and sort_order == 'desc' else 'desc' }}" class="tooltip">
+                        Liq/MC
+                        <span class="tooltiptext">Liquidité / Market Cap</span>
+                    </a></th>
+                    <th><a href="?sort=performance&order={{ 'asc' if sort_by == 'performance' and sort_order == 'desc' else 'desc' }}" class="tooltip">
+                        Score
+                        <span class="tooltiptext">Score combiné basé sur les ratios</span>
+                    </a></th>
+                    <th><a href="?sort=is_pump&order={{ 'asc' if sort_by == 'is_pump' and sort_order == 'desc' else 'desc' }}" class="tooltip">
+                        Pump
+                        <span class="tooltiptext">Token avec adresse finissant par 'pump'</span>
+                    </a></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for token in tokens %}
+                <tr class="{{ 'suspicious' if token.is_suspicious }}">
+                    <td>{{ token.symbol }}</td>
+                    <td>{{ token.name }}</td>
+                    <td>{{ "{:,.0f}".format(token.liquidity).replace(',', ' ') }}</td>
+                    <td>{{ "{:,.0f}".format(token.v24hUSD).replace(',', ' ') }}</td>
+                    <td>{{ "{:,.0f}".format(token.mc).replace(',', ' ') }}</td>
+                    <td class="{{ 'positive' if token.v24hChangePercent > 0 else 'negative' }}">
+                        {{ "{:+.2f}%".format(token.v24hChangePercent) }}
+                    </td>
+                    <td>{{ "{:.2f}".format(token.volume_liquidity_ratio) }}</td>
+                    <td>{{ "{:.2f}".format(token.volume_mc_ratio) }}</td>
+                    <td>{{ "{:.2f}".format(token.liquidity_mc_ratio) }}</td>
+                    <td class="{{ 'positive' if token.performance > 0 else 'negative' }}">
+                        {{ "{:+.2f}".format(token.performance) }}
+                    </td>
+                    <td style="text-align: center;">{{ "✓" if token.is_pump else "" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Aucune donnée de token disponible.</p>
+    {% endif %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.querySelector('table');
+            let isResizing = false;
+            let currentTh = null;
+            let startX = 0;
+            let startWidth = 0;
+
+            document.querySelectorAll('th').forEach(th => {
+                const resizer = document.createElement('div');
+                resizer.className = 'resizer';
+                th.appendChild(resizer);
+
+                resizer.addEventListener('mousedown', function(e) {
+                    isResizing = true;
+                    currentTh = th;
+                    startX = e.pageX;
+                    startWidth = currentTh.offsetWidth;
+                    document.body.classList.add('resizing');
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isResizing) return;
+
+                const width = startWidth + (e.pageX - startX);
+                if (width > 50) {
+                    currentTh.style.width = width + 'px';
+                    const columnIndex = Array.from(currentTh.parentNode.children).indexOf(currentTh);
+                    const cells = table.querySelectorAll(`td:nth-child(${columnIndex + 1})`);
+                    cells.forEach(cell => cell.style.width = width + 'px');
+                }
+            });
+
+            document.addEventListener('mouseup', function() {
+                if (isResizing) {
+                    isResizing = false;
+                    document.body.classList.remove('resizing');
+                    saveColumnWidths();
+                }
+            });
+
+            function saveColumnWidths() {
+                const widths = {};
+                document.querySelectorAll('th').forEach((th, index) => {
+                    widths[index] = th.style.width;
+                });
+                localStorage.setItem('columnWidths', JSON.stringify(widths));
+            }
+
+            function restoreColumnWidths() {
+                const widths = JSON.parse(localStorage.getItem('columnWidths'));
+                if (widths) {
+                    document.querySelectorAll('th').forEach((th, index) => {
+                        if (widths[index]) {
+                            th.style.width = widths[index];
+                            const cells = table.querySelectorAll(`td:nth-child(${index + 1})`);
+                            cells.forEach(cell => cell.style.width = widths[index]);
+                        }
+                    });
+                }
+            }
+
+            restoreColumnWidths();
+        });
+    </script>
+</body>
+</html>
