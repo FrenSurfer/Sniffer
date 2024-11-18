@@ -5,152 +5,166 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analyse des Tokens Solana</title>
     <style>
+        /* Styles de base */
         table {
-            border-collapse: collapse;
             width: 100%;
-            margin-top: 20px;
+            border-collapse: collapse;
+            margin: 20px 0;
             font-size: 14px;
-            table-layout: fixed;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
             text-align: right;
+            background-color: #fff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            border: 1px solid #dee2e6;
+        }
+
+        thead { background-color: #f8f9fa; }
+
+        th, td {
+            padding: 10px 15px;
+            border: 1px solid #dee2e6;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
-        th {
-            position: relative;
-            background-color: #f2f2f2;
-            cursor: pointer;
-            text-align: center;
-            padding: 10px 5px;
-            user-select: none;
-        }
+
+        th { font-weight: bold; }
+
+        tr:nth-child(even) { background-color: #f8f9fa; }
+        tr:hover { background-color: #f5f5f5; }
+
+        /* Styles pour les liens et valeurs */
         th a {
-            color: #000;
+            color: #333;
             text-decoration: none;
             display: block;
+        }
+        th a:hover { color: #007bff; }
+
+        .positive { color: #28a745; }
+        .negative { color: #dc3545; }
+
+        /* Style pour les cellules suspectes */
+        td.suspicious {
+            background-color: rgba(255, 255, 0, 0.3) !important;
+            position: relative;
+        }
+        td.suspicious:hover {
+            background-color: rgba(255, 255, 0, 0.4) !important;
+        }
+
+        /* Styles pour les cases à cocher */
+        input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        /* Styles pour la comparaison */
+        .comparison-controls {
+            margin: 20px 0;
+        }
+
+        #compareButton {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #compareButton:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        #selectedCount {
+            margin-left: 10px;
+            color: #666;
+        }
+
+        /* Styles pour la modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
             width: 100%;
-            padding: 8px 4px;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
         }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 1200px;
+            border-radius: 8px;
         }
-        tr:hover {
-            background-color: #f5f5f5;
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
         }
-        td:first-child, td:nth-child(2) {
-            text-align: left;
-        }
+        .close:hover { color: black; }
+
+        /* Autres styles existants... */
         .tooltip {
             position: relative;
             display: inline-block;
+            cursor: help;
         }
+
         .tooltip .tooltiptext {
             visibility: hidden;
             width: 200px;
-            background-color: rgba(0, 0, 0, 0.8);
+            background-color: #333;
             color: #fff;
             text-align: center;
-            padding: 5px;
             border-radius: 6px;
+            padding: 5px;
             position: absolute;
             z-index: 1;
             bottom: 125%;
             left: 50%;
-            transform: translateX(-50%);
+            margin-left: -100px;
             opacity: 0;
             transition: opacity 0.3s;
             font-size: 12px;
             white-space: normal;
         }
+
         .tooltip:hover .tooltiptext {
             visibility: visible;
             opacity: 1;
         }
-        .negative {
-            color: red;
+        .comparison-controls {
+            margin-bottom: 20px;
         }
-        .positive {
-            color: green;
-        }
-        .number-header {
-            text-align: right;
-        }
-        .resizer {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 5px;
-            height: 100%;
-            background-color: #ddd;
-            cursor: col-resize;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        th:hover .resizer {
-            opacity: 1;
-        }
-        .resizing {
-            cursor: col-resize;
-            user-select: none;
-        }
-        #controls {
-            margin: 20px 0;
+
+        .metric-toggles {
+            margin: 10px 0;
             padding: 10px;
-            background-color: #f8f8f8;
-            border-radius: 5px;
-        }
-        button {
-            padding: 8px 15px;
-            background-color: #f2f2f2;
-            border: 1px solid #ddd;
+            background: #f8f9fa;
             border-radius: 4px;
+        }
+
+        .metric-toggles label {
+            margin-right: 15px;
             cursor: pointer;
         }
-        button:hover {
-            background-color: #e6e6e6;
+
+        .metric-toggles input[type="checkbox"] {
+            margin-right: 5px;
         }
-        /* Style pour la colonne Pump */
-        td:nth-child(3) {
-            text-align: center;
-            color: #4CAF50;
-            font-weight: bold;
-            font-size: 16px;
+
+        .comparison-table tr.hidden {
+            display: none;
         }
-        td:nth-child(11) {
-        text-align: center;
-        color: #4CAF50;
-        font-weight: bold;
-        font-size: 16px;
-    }
-    tr.suspicious {
-        background-color: rgba(255, 255, 0, 0.2) !important; /* Jaune transparent */
-    }
-    
-    tr.suspicious:hover {
-        background-color: rgba(255, 255, 0, 0.3) !important;
-    }
-    
-    /* Pour garder le style alterné même avec les lignes suspectes */
-    tr.suspicious:nth-child(even) {
-        background-color: rgba(255, 255, 0, 0.15) !important;
-    }
-        
-        /* Ajustement des largeurs des colonnes */
-        th:nth-child(1), td:nth-child(1) { width: 8%; }  /* Symbole */
-        th:nth-child(2), td:nth-child(2) { width: 12%; } /* Nom */
-        th:nth-child(3), td:nth-child(3) { width: 10%; } /* Liquidité */
-        th:nth-child(4), td:nth-child(4) { width: 10%; } /* Volume 24h */
-        th:nth-child(5), td:nth-child(5) { width: 10%; } /* Market Cap */
-        th:nth-child(6), td:nth-child(6) { width: 8%; }  /* Var. Prix */
-        th:nth-child(7), td:nth-child(7) { width: 9%; }  /* Vol/Liq */
-        th:nth-child(8), td:nth-child(8) { width: 9%; }  /* Vol/MC */
-        th:nth-child(9), td:nth-child(9) { width: 9%; }  /* Liq/MC */
-        th:nth-child(10), td:nth-child(10) { width: 10%; } /* Score */
-        th:nth-child(11), td:nth-child(11) { width: 5%; } /* Score */
     </style>
 </head>
 <body>
@@ -161,11 +175,17 @@
             Réinitialiser les largeurs
         </button>
     </div>
+    <div class="comparison-controls">
+        <button id="compareButton" disabled>Comparer les tokens sélectionnés</button>
+        <span id="selectedCount">(0 sélectionné)</span>
+    </div>
 
     {% if tokens %}
         <table>
             <thead>
                 <tr>
+                    <th><input type="checkbox" id="selectAll"></th>  <!-- Ajout de la case à cocher principale -->
+        
                     <th><a href="?sort=symbol&order={{ 'asc' if sort_by == 'symbol' and sort_order == 'desc' else 'desc' }}">Symbole</a></th>
                     <th><a href="?sort=name&order={{ 'asc' if sort_by == 'name' and sort_order == 'desc' else 'desc' }}">Nom</a></th>
                     <th><a href="?sort=liquidity&order={{ 'asc' if sort_by == 'liquidity' and sort_order == 'desc' else 'desc' }}">Liq. ($)</a></th>
@@ -199,18 +219,25 @@
             </thead>
             <tbody>
                 {% for token in tokens %}
-                <tr class="{{ 'suspicious' if token.is_suspicious }}">
+                <tr>
+                    <td><input type="checkbox" class="token-select" data-address="{{ token.address }}"></td>
                     <td>{{ token.symbol }}</td>
                     <td>{{ token.name }}</td>
                     <td>{{ "{:,.0f}".format(token.liquidity).replace(',', ' ') }}</td>
                     <td>{{ "{:,.0f}".format(token.v24hUSD).replace(',', ' ') }}</td>
                     <td>{{ "{:,.0f}".format(token.mc).replace(',', ' ') }}</td>
-                    <td class="{{ 'positive' if token.v24hChangePercent > 0 else 'negative' }}">
+                    <td class="{{ 'positive' if token.v24hChangePercent > 0 else 'negative' }} {{ 'suspicious' if token.v24hChangePercent > 100 or token.v24hChangePercent < -50 }}">
                         {{ "{:+.2f}%".format(token.v24hChangePercent) }}
                     </td>
-                    <td>{{ "{:.2f}".format(token.volume_liquidity_ratio) }}</td>
-                    <td>{{ "{:.2f}".format(token.volume_mc_ratio) }}</td>
-                    <td>{{ "{:.2f}".format(token.liquidity_mc_ratio) }}</td>
+                    <td class="{{ 'suspicious' if token.volume_liquidity_ratio > 5 }}">
+                        {{ "{:.2f}".format(token.volume_liquidity_ratio) }}
+                    </td>
+                    <td class="{{ 'suspicious' if token.volume_mc_ratio > 3 }}">
+                        {{ "{:.2f}".format(token.volume_mc_ratio) }}
+                    </td>
+                    <td class="{{ 'suspicious' if token.liquidity_mc_ratio < 0.05 }}">
+                        {{ "{:.2f}".format(token.liquidity_mc_ratio) }}
+                    </td>
                     <td class="{{ 'positive' if token.performance > 0 else 'negative' }}">
                         {{ "{:+.2f}".format(token.performance) }}
                     </td>
@@ -219,9 +246,18 @@
                 {% endfor %}
             </tbody>
         </table>
-    {% else %}
-        <p>Aucune donnée de token disponible.</p>
-    {% endif %}
+        {% else %}
+            <p>Aucune donnée de token disponible.</p>
+        {% endif %}
+    
+        <!-- Modal de comparaison -->
+        <div id="comparisonModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Comparaison des tokens</h2>
+                <div id="comparisonTable"></div>
+            </div>
+        </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -291,5 +327,129 @@
             restoreColumnWidths();
         });
     </script>
+    <script>
+       document.addEventListener('DOMContentLoaded', function() {
+    const selectAll = document.getElementById('selectAll');
+    const compareButton = document.getElementById('compareButton');
+    const selectedCount = document.getElementById('selectedCount');
+    const modal = document.getElementById('comparisonModal');
+    const closeBtn = document.querySelector('.close');
+    const tokenCheckboxes = document.querySelectorAll('.token-select');
+
+    // Gestion de la sélection
+    function updateSelection() {
+        const selectedTokens = document.querySelectorAll('.token-select:checked');
+        const count = selectedTokens.length;
+        selectedCount.textContent = `(${count} sélectionné${count > 1 ? 's' : ''})`;
+        compareButton.disabled = count < 2;
+    }
+
+    selectAll.addEventListener('change', function() {
+        tokenCheckboxes.forEach(cb => cb.checked = this.checked);
+        updateSelection();
+    });
+
+    tokenCheckboxes.forEach(cb => {
+        cb.addEventListener('change', updateSelection);
+    });
+
+    // Gestion de la comparaison
+    function displayComparison(tokens) {
+        const comparisonTable = document.getElementById('comparisonTable');
+        
+        // Définition des métriques
+        const metrics = [
+            {id: 'name', name: 'Nom', key: 'name'},
+            {id: 'liquidity', name: 'Liquidité', key: 'liquidity'},
+            {id: 'volume', name: 'Volume 24h', key: 'volume'},
+            {id: 'mc', name: 'Market Cap', key: 'mc'},
+            {id: 'change', name: 'Variation 24h', key: 'change'},
+            {id: 'vol_liq', name: 'Volume/Liquidité', key: 'vol_liq'},
+            {id: 'vol_mc', name: 'Volume/MC', key: 'vol_mc'},
+            {id: 'liq_mc', name: 'Liquidité/MC', key: 'liq_mc'},
+            {id: 'performance', name: 'Performance', key: 'performance'}
+        ];
+
+        // Création des toggles
+        let togglesHtml = '<div class="metric-toggles">Afficher/Masquer : ';
+        metrics.forEach(metric => {
+            togglesHtml += `
+                <label>
+                    <input type="checkbox" 
+                           class="metric-toggle" 
+                           data-metric="${metric.id}" 
+                           checked>
+                    ${metric.name}
+                </label>`;
+        });
+        togglesHtml += '</div>';
+
+        // Création du tableau
+        let tableHtml = '<table class="comparison-table">';
+        tableHtml += '<tr><th>Métrique</th>';
+        tokens.forEach(token => {
+            tableHtml += `<th>${token.symbol}</th>`;
+        });
+        tableHtml += '</tr>';
+
+        metrics.forEach(metric => {
+            tableHtml += `<tr data-metric="${metric.id}">`;
+            tableHtml += `<td>${metric.name}</td>`;
+            tokens.forEach(token => {
+                tableHtml += `<td>${token[metric.key]}</td>`;
+            });
+            tableHtml += '</tr>';
+        });
+
+        tableHtml += '</table>';
+        
+        comparisonTable.innerHTML = togglesHtml + tableHtml;
+
+        // Gestion des toggles
+        document.querySelectorAll('.metric-toggle').forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                const metricId = this.dataset.metric;
+                const row = document.querySelector(`tr[data-metric="${metricId}"]`);
+                if (row) {
+                    row.classList.toggle('hidden', !this.checked);
+                }
+            });
+        });
+    }
+
+    compareButton.addEventListener('click', function() {
+        const selectedTokens = Array.from(document.querySelectorAll('.token-select:checked'))
+            .map(cb => {
+                const row = cb.closest('tr');
+                return {
+                    symbol: row.cells[1].textContent,
+                    name: row.cells[2].textContent,
+                    liquidity: row.cells[3].textContent,
+                    volume: row.cells[4].textContent,
+                    mc: row.cells[5].textContent,
+                    change: row.cells[6].textContent,
+                    vol_liq: row.cells[7].textContent,
+                    vol_mc: row.cells[8].textContent,
+                    liq_mc: row.cells[9].textContent,
+                    performance: row.cells[10].textContent
+                };
+            });
+
+        displayComparison(selectedTokens);
+        modal.style.display = "block";
+    });
+
+    closeBtn.addEventListener('click', function() {
+        modal.style.display = "none";
+    });
+
+    window.addEventListener('click', function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    });
+});
+        </script>
+    
 </body>
 </html>

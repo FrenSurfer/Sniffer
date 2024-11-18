@@ -46,6 +46,12 @@ def index():
                          sort_by=sort_by, 
                          sort_order=sort_order)
 
+@app.route('/compare', methods=['POST'])
+def compare_tokens():
+    token_addresses = request.json['addresses']
+    compared_tokens = [t for t in token_data if t['address'] in token_addresses]
+    return jsonify(compared_tokens)
+
 if __name__ == '__main__':
     fetch_token_data()
     app.run(debug=True)
