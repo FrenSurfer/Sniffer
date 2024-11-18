@@ -97,6 +97,8 @@ def process_token_list(token_list, score_weights=None):
         (df['v24hChangePercent'] < -50)         # Dump > 50%
     )
     
+    
+    df['less_than_24h'] = (df['v24hChangePercent'] == 0.00)
     # Détection des pump tokens
     df['is_pump'] = df['address'].str.lower().str.endswith('pump')
     

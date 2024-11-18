@@ -30,7 +30,8 @@ document.addEventListener('DOMContentLoaded', function() {
             volume: parseNumericValue(document.getElementById('minVolume').value),
             mcapMin: parseNumericValue(document.getElementById('minMc').value),
             mcapMax: parseNumericValue(document.getElementById('maxMc').value),
-            suspicious: document.getElementById('filterSuspicious').checked
+            suspicious: document.getElementById('filterSuspicious').checked,
+            hide24h: document.getElementById('filter24h').checked  // Ajout du filtre 24h
         };
         
         let visibleCount = 0;
@@ -41,38 +42,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 liquidity: parseNumericValue(row.cells[3].textContent),
                 volume: parseNumericValue(row.cells[4].textContent),
                 mcap: parseNumericValue(row.cells[5].textContent),
-                isSuspicious: row.querySelector('.suspicious') !== null
+                priceChange: parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, '')),
+                isSuspicious: row.querySelector('.suspicious') !== null,
+                isLessThan24h: parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, '')) === 0.00  // Détection token < 24h
             };
             
-            // Vérifier chaque filtre indépendamment
+            // Vérifier chaque filtre
             const meetsFilters = 
-                // Filtre de liquidité
                 (filters.liquidity === 0 || values.liquidity >= filters.liquidity) &&
-                // Filtre de volume
                 (filters.volume === 0 || values.volume >= filters.volume) &&
-                // Filtres de Market Cap (min et max)
                 (filters.mcapMin === 0 || values.mcap >= filters.mcapMin) &&
                 (filters.mcapMax === 0 || values.mcap <= filters.mcapMax) &&
-                // Filtre des tokens suspects
-                (!filters.suspicious || !values.isSuspicious);
+                (!filters.suspicious || !values.isSuspicious) &&
+                (!filters.hide24h || !values.isLessThan24h);  // Filtre des tokens < 24h
             
-            // Appliquer la visibilité
             row.style.display = meetsFilters ? '' : 'none';
             if (meetsFilters) visibleCount++;
-            
-            // Debug log pour voir les valeurs
-            if (!meetsFilters) {
-                console.log('Token filtré:', {
-                    symbol: row.cells[1].textContent,
-                    values,
-                    filters,
-                    failedLiquidity: filters.liquidity > 0 && values.liquidity < filters.liquidity,
-                    failedVolume: filters.volume > 0 && values.volume < filters.volume,
-                    failedMcapMin: filters.mcapMin > 0 && values.mcap < filters.mcapMin,
-                    failedMcapMax: filters.mcapMax > 0 && values.mcap > filters.mcapMax,
-                    failedSuspicious: filters.suspicious && values.isSuspicious
-                });
-            }
         });
         
         updateVisibleCount(visibleCount);
@@ -204,6 +189,85 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedCount.textContent = `(${checkedCount} sélectionné${checkedCount > 1 ? 's' : ''})`;
         compareButton.disabled = checkedCount < 2;
     }
+
+    // Gestion du modal de comparaison
+compareButton.addEventListener('click', async function() {
+    const selectedAddresses = Array.from(document.querySelectorAll('.token-select:checked'))
+        .map(checkbox => checkbox.dataset.address);
+    
+    if (selectedAddresses.length < 2) return;
+    
+    try {
+        const response = await fetch('/compare', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ addresses: selectedAddresses })
+        });
+        
+        const tokens = await response.json();
+        
+        // Créer le tableau de comparaison
+        let comparisonHTML = `
+            <table>
+                <tr>
+                    <th>Métrique</th>
+                    ${tokens.map(t => `<th>${t.symbol}</th>`).join('')}
+                </tr>
+                <tr>
+                    <td>Liquidité ($)</td>
+                    ${tokens.map(t => `<td>${t.liquidity.toLocaleString()}</td>`).join('')}
+                </tr>
+                <tr>
+                    <td>Volume 24h ($)</td>
+                    ${tokens.map(t => `<td>${t.v24hUSD.toLocaleString()}</td>`).join('')}
+                </tr>
+                <tr>
+                    <td>Market Cap ($)</td>
+                    ${tokens.map(t => `<td>${t.mc.toLocaleString()}</td>`).join('')}
+                </tr>
+                <tr>
+                    <td>Variation Prix (%)</td>
+                    ${tokens.map(t => `<td class="${t.v24hChangePercent > 0 ? 'positive' : 'negative'}">${t.v24hChangePercent.toFixed(2)}%</td>`).join('')}
+                </tr>
+                <tr>
+                    <td>Vol/Liq Ratio</td>
+                    ${tokens.map(t => `<td>${t.volume_liquidity_ratio.toFixed(2)}</td>`).join('')}
+                </tr>
+                <tr>
+                    <td>Vol/MC Ratio</td>
+                    ${tokens.map(t => `<td>${t.volume_mc_ratio.toFixed(2)}</td>`).join('')}
+                </tr>
+                <tr>
+                    <td>Liq/MC Ratio</td>
+                    ${tokens.map(t => `<td>${t.liquidity_mc_ratio.toFixed(2)}</td>`).join('')}
+                </tr>
+                <tr>
+                    <td>Score</td>
+                    ${tokens.map(t => `<td>${t.performance.toFixed(2)}</td>`).join('')}
+                </tr>
+            </table>
+        `;
+        
+        document.getElementById('comparisonTable').innerHTML = comparisonHTML;
+        modal.style.display = 'block';
+        
+    } catch (error) {
+        console.error('Erreur lors de la comparaison:', error);
+    }
+});
+
+// Fermeture du modal
+closeBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
+});
+
+window.addEventListener('click', (event) => {
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+});
 
     // Initialisation
     function init() {
