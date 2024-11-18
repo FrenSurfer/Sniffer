@@ -17,7 +17,9 @@
             position: relative;
             max-height: calc(100vh - 250px);
             overflow-y: auto;
+            overflow-x: hidden;
             margin: 20px 0;
+            width: 100%;
         }
     
         /* Style général du tableau */
@@ -31,13 +33,14 @@
             background-color: #fff;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
             border: 1px solid #dee2e6;
+            table-layout: fixed;
         }
     
         /* En-tête du tableau */
         thead {
             position: sticky;
             top: 0;
-            z-index: 1000;
+            z-index: 1001;
             background-color: #f8f9fa;
         }
     
@@ -50,6 +53,9 @@
             background-color: #f8f9fa;
             box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
             white-space: nowrap;
+            overflow: visible;
+            min-width: 80px;
+            z-index: 1001;
         }
     
         th:after {
@@ -65,6 +71,14 @@
             padding: 10px 15px;
             border: 1px solid #dee2e6;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            min-width: 80px;
+        }
+    
+        tbody {
+            position: relative;
+            z-index: 1000;
         }
     
         tr:nth-child(even) { background-color: #f8f9fa; }
@@ -125,7 +139,7 @@
         .modal {
             display: none;
             position: fixed;
-            z-index: 1000;
+            z-index: 1002;
             left: 0;
             top: 0;
             width: 100%;
@@ -168,7 +182,7 @@
             border-radius: 6px;
             padding: 5px;
             position: absolute;
-            z-index: 1;
+            z-index: 1002;
             bottom: 125%;
             left: 50%;
             margin-left: -100px;
@@ -176,6 +190,7 @@
             transition: opacity 0.3s;
             font-size: 12px;
             white-space: normal;
+            pointer-events: none;
         }
     
         .tooltip:hover .tooltiptext {
@@ -259,7 +274,14 @@
         .comparison-table tr.hidden {
             display: none;
         }
+    
+        /* Style pour le contrôle de redimensionnement */
+        .resizing {
+            cursor: col-resize;
+            user-select: none;
+        }
     </style>
+    
 </head>
 <body>
     <h1>Analyse des Tokens Solana</h1>
