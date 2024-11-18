@@ -13,8 +13,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const thresholdsPanel = document.getElementById('thresholdsPanel');
     const toggleWeightsButton = document.getElementById('toggleWeights');
     const weightsPanel = document.getElementById('weightsPanel');
-    let currentSortColumn = '';
-    let currentSortOrder = 'asc';
 
     // Fonctions utilitaires
     function parseNumericValue(value) {
@@ -24,30 +22,44 @@ document.addEventListener('DOMContentLoaded', function() {
         return parseFloat(value) || 0;
     }
 
-    // Fonction de tri
-    function sortTable(column) {
+    // Fonction de tri globale
+    window.sortTable = function(column) {
         const tbody = table.querySelector('tbody');
         const rows = Array.from(tbody.querySelectorAll('tr'));
         
+        // Récupérer l'état de tri actuel
+        let currentSortOrder = tbody.getAttribute('data-sort-order') || 'asc';
+        let currentSortColumn = tbody.getAttribute('data-sort-column');
+        
+        // Inverser l'ordre si on clique sur la même colonne
         if (currentSortColumn === column) {
             currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
         } else {
-            currentSortColumn = column;
             currentSortOrder = 'asc';
         }
         
+        // Sauvegarder l'état de tri
+        tbody.setAttribute('data-sort-order', currentSortOrder);
+        tbody.setAttribute('data-sort-column', column);
+        
+        // Trier les lignes
         rows.sort((a, b) => {
             let aValue = a.cells[getColumnIndex(column)].textContent.trim();
             let bValue = b.cells[getColumnIndex(column)].textContent.trim();
             
+            // Conversion des valeurs selon le type de colonne
             if (column === 'liquidity' || column === 'v24hUSD' || column === 'mc') {
-                aValue = parseNumericValue(aValue);
-                bValue = parseNumericValue(bValue);
-            } else if (column === 'v24hChangePercent' || column.includes('ratio')) {
+                aValue = parseFloat(aValue.replace(/[^\d.-]/g, ''));
+                bValue = parseFloat(bValue.replace(/[^\d.-]/g, ''));
+            } else if (column === 'v24hChangePercent' || column.includes('ratio') || column === 'performance') {
                 aValue = parseFloat(aValue.replace(/[%+]/g, ''));
                 bValue = parseFloat(bValue.replace(/[%+]/g, ''));
+            } else if (column === 'is_pump') {
+                aValue = aValue === '✓' ? 1 : 0;
+                bValue = bValue === '✓' ? 1 : 0;
             }
             
+            // Comparaison
             if (currentSortOrder === 'asc') {
                 return aValue > bValue ? 1 : -1;
             } else {
@@ -55,9 +67,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         
+        // Réorganiser les lignes
         rows.forEach(row => tbody.appendChild(row));
-        updateSortIndicators(column);
-    }
+        
+        // Mettre à jour les indicateurs visuels de tri
+        updateSortIndicators(column, currentSortOrder);
+    };
 
     function getColumnIndex(column) {
         const columnMap = {
@@ -76,12 +91,12 @@ document.addEventListener('DOMContentLoaded', function() {
         return columnMap[column];
     }
 
-    function updateSortIndicators(column) {
-        const headers = table.querySelectorAll('th a');
+    function updateSortIndicators(column, order) {
+        const headers = document.querySelectorAll('th a');
         headers.forEach(header => {
             header.classList.remove('asc', 'desc');
             if (header.dataset.column === column) {
-                header.classList.add(currentSortOrder);
+                header.classList.add(order);
             }
         });
     }
@@ -110,36 +125,57 @@ document.addEventListener('DOMContentLoaded', function() {
                 isLessThan24h: parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, '')) === 0.00
             };
             
-            const meetsFilters = 
-                (filters.liquidity === 0 || values.liquidity >= filters.liquidity) &&
-                (filters.volume === 0 || values.volume >= filters.volume) &&
-                (filters.mcapMin === 0 || values.mcap >= filters.mcapMin) &&
-                (filters.mcapMax === 0 || values.mcap <= filters.mcapMax) &&
-                (!filters.suspicious || !values.isSuspicious) &&
-                (!filters.hide24h || !values.isLessThan24h);
+            let visible = true;
             
-            row.style.display = meetsFilters ? '' : 'none';
-            if (meetsFilters) visibleCount++;
+            if (filters.liquidity && values.liquidity < filters.liquidity) visible = false;
+            if (filters.volume && values.volume < filters.volume) visible = false;
+            if (filters.mcapMin && values.mcap < filters.mcapMin) visible = false;
+            if (filters.mcapMax && values.mcap > filters.mcapMax) visible = false;
+            if (filters.suspicious && values.isSuspicious) visible = false;
+            if (filters.hide24h && values.isLessThan24h) visible = false;
+            
+            row.style.display = visible ? '' : 'none';
+            if (visible) visibleCount++;
         });
         
-        updateVisibleCount(visibleCount);
-        saveFilters();
+        document.getElementById('visibleCount').textContent = `${visibleCount} tokens affichés`;
+        
+        // Sauvegarder les filtres
+        const filtersToSave = {
+            minLiquidity: document.getElementById('minLiquidity').value,
+            minVolume: document.getElementById('minVolume').value,
+            minMc: document.getElementById('minMc').value,
+            maxMc: document.getElementById('maxMc').value,
+            filterSuspicious: document.getElementById('filterSuspicious').checked,
+            filter24h: document.getElementById('filter24h').checked
+        };
+        localStorage.setItem('tokenFilters', JSON.stringify(filtersToSave));
     }
 
-    // Réinitialisation des filtres
-    function resetFilters() {
+    // Event listeners pour les filtres
+    filterButton.addEventListener('click', applyFilters);
+    document.getElementById('resetFilters').addEventListener('click', function() {
         document.getElementById('minLiquidity').value = '';
         document.getElementById('minVolume').value = '';
         document.getElementById('minMc').value = '';
         document.getElementById('maxMc').value = '';
         document.getElementById('filterSuspicious').checked = false;
         document.getElementById('filter24h').checked = true;
-
-        localStorage.removeItem('tokenFilters');
         applyFilters();
-    }
+    });
 
-    // Gestion des seuils suspects
+    // Gestion des seuils de détection
+    toggleButton.addEventListener('click', function() {
+        thresholdsPanel.style.display = thresholdsPanel.style.display === 'none' ? 'block' : 'none';
+        this.textContent = `Seuils de détection ${thresholdsPanel.style.display === 'none' ? '▼' : '▲'}`;
+    });
+
+    // Gestion des poids
+    toggleWeightsButton.addEventListener('click', function() {
+        weightsPanel.style.display = weightsPanel.style.display === 'none' ? 'block' : 'none';
+        this.textContent = `Coefficients du Score ${weightsPanel.style.display === 'none' ? '▼' : '▲'}`;
+    });
+
     function updateSuspiciousHighlight() {
         const priceChangeMin = parseFloat(document.getElementById('priceChangeMin').value);
         const priceChangeMax = parseFloat(document.getElementById('priceChangeMax').value);
@@ -147,59 +183,20 @@ document.addEventListener('DOMContentLoaded', function() {
         const volMcThreshold = parseFloat(document.getElementById('volMcThreshold').value);
         const liqMcThreshold = parseFloat(document.getElementById('liqMcThreshold').value);
 
-        document.querySelectorAll('tbody tr').forEach(row => {
+        const rows = document.querySelectorAll('tbody tr');
+        rows.forEach(row => {
             const priceChange = parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, ''));
             const volLiqRatio = parseFloat(row.cells[7].textContent);
             const volMcRatio = parseFloat(row.cells[8].textContent);
             const liqMcRatio = parseFloat(row.cells[9].textContent);
 
-            row.cells[6].classList.toggle('suspicious', 
-                priceChange < priceChangeMin || priceChange > priceChangeMax);
-            row.cells[7].classList.toggle('suspicious', 
-                volLiqRatio > volLiqThreshold);
-            row.cells[8].classList.toggle('suspicious', 
-                volMcRatio > volMcThreshold);
-            row.cells[9].classList.toggle('suspicious', 
-                liqMcRatio < liqMcThreshold);
+            row.cells[6].classList.toggle('suspicious', priceChange < priceChangeMin || priceChange > priceChangeMax);
+            row.cells[7].classList.toggle('suspicious', volLiqRatio > volLiqThreshold);
+            row.cells[8].classList.toggle('suspicious', volMcRatio > volMcThreshold);
+            row.cells[9].classList.toggle('suspicious', liqMcRatio < liqMcThreshold);
         });
 
-        saveThresholds();
-        applyFilters();
-    }
-
-    // Gestion des coefficients du score
-    function updateWeightTotal() {
-        const weights = getWeights();
-        const total = Object.values(weights).reduce((a, b) => a + b, 0);
-        document.getElementById('weightTotal').textContent = total.toFixed(2);
-        document.getElementById('weightTotal').style.color = 
-            Math.abs(total - 1.0) < 0.01 ? 'inherit' : 'red';
-    }
-
-    function getWeights() {
-        return {
-            priceChange: parseFloat(document.getElementById('priceChangeWeight').value) || 0,
-            volume: parseFloat(document.getElementById('volumeWeight').value) || 0,
-            liquidity: parseFloat(document.getElementById('liquidityWeight').value) || 0,
-            volLiq: parseFloat(document.getElementById('volLiqWeight').value) || 0,
-            volMc: parseFloat(document.getElementById('volMcWeight').value) || 0,
-            liqMc: parseFloat(document.getElementById('liqMcWeight').value) || 0
-        };
-    }
-
-    // Gestion de la persistance
-    function saveFilters() {
-        const filters = {
-            minLiquidity: document.getElementById('minLiquidity').value,
-            minVolume: document.getElementById('minVolume').value,
-            minMc: document.getElementById('minMc').value,
-            maxMc: document.getElementById('maxMc').value,
-            hideSuspicious: document.getElementById('filterSuspicious').checked
-        };
-        localStorage.setItem('tokenFilters', JSON.stringify(filters));
-    }
-
-    function saveThresholds() {
+        // Sauvegarder les seuils
         const thresholds = {
             priceChangeMin: document.getElementById('priceChangeMin').value,
             priceChangeMax: document.getElementById('priceChangeMax').value,
@@ -210,46 +207,27 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('tokenThresholds', JSON.stringify(thresholds));
     }
 
-    function updateVisibleCount(count) {
-        const countElement = document.getElementById('visibleCount');
-        if (countElement) {
-            countElement.textContent = `${count} tokens affichés`;
-        }
+    // Event listeners pour les seuils
+    document.querySelectorAll('#thresholdsPanel input').forEach(input => {
+        input.addEventListener('change', updateSuspiciousHighlight);
+    });
+
+    function updateWeightTotal() {
+        const weights = [
+            parseFloat(document.getElementById('priceChangeWeight').value) || 0,
+            parseFloat(document.getElementById('volumeWeight').value) || 0,
+            parseFloat(document.getElementById('liquidityWeight').value) || 0,
+            parseFloat(document.getElementById('volLiqWeight').value) || 0,
+            parseFloat(document.getElementById('volMcWeight').value) || 0,
+            parseFloat(document.getElementById('liqMcWeight').value) || 0
+        ];
+        
+        const total = weights.reduce((a, b) => a + b, 0);
+        document.getElementById('weightTotal').textContent = total.toFixed(2);
+        document.getElementById('weightTotal').style.color = Math.abs(total - 1.0) < 0.01 ? 'inherit' : 'red';
     }
 
-    // Event Listeners
-    toggleButton.addEventListener('click', () => {
-        const isHidden = thresholdsPanel.style.display === 'none';
-        thresholdsPanel.style.display = isHidden ? 'block' : 'none';
-        toggleButton.textContent = `Seuils de détection ${isHidden ? '▼' : '▲'}`;
-    });
-
-    toggleWeightsButton.addEventListener('click', () => {
-        const isHidden = weightsPanel.style.display === 'none';
-        weightsPanel.style.display = isHidden ? 'block' : 'none';
-        toggleWeightsButton.textContent = `Coefficients du Score ${isHidden ? '▼' : '▲'}`;
-    });
-
-    filterButton.addEventListener('click', applyFilters);
-    document.getElementById('resetFilters').addEventListener('click', resetFilters);
-
-    // Event Listeners pour les seuils de détection
-    const thresholdInputs = [
-        'priceChangeMin',
-        'priceChangeMax',
-        'volLiqThreshold',
-        'volMcThreshold',
-        'liqMcThreshold'
-    ];
-
-    thresholdInputs.forEach(id => {
-        document.getElementById(id).addEventListener('change', updateSuspiciousHighlight);
-    });
-
-    // Event listener pour le bouton d'application des coefficients
-    document.getElementById('applyWeights').addEventListener('click', updateWeightTotal);
-
-    // Event listeners pour les inputs de poids
+    // Event listeners pour les poids
     const weightInputs = [
         'priceChangeWeight',
         'volumeWeight',
@@ -355,7 +333,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('comparisonTable').innerHTML = comparisonHTML;
             modal.style.display = 'block';
 
-            // Ajouter les event listeners pour les toggles
+            // Event listeners pour les toggles
             document.querySelectorAll('.metric-toggles input[type="checkbox"]').forEach(checkbox => {
                 checkbox.addEventListener('change', function() {
                     const metric = this.dataset.metric;
