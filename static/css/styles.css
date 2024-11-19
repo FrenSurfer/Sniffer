@@ -3,6 +3,8 @@ body {
     margin: 0;
     padding: 20px;
     font-family: Arial, sans-serif;
+    background-color: #1a1a1a;
+    color: #e0e0e0;
 }
 
 /* Style pour le conteneur du tableau */
@@ -23,9 +25,9 @@ table {
     border-spacing: 0;
     font-size: 14px;
     text-align: right;
-    background-color: #fff;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    border: 1px solid #dee2e6;
+    background-color: #2d2d2d;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+    border: 1px solid #404040;
     table-layout: fixed;
 }
 
@@ -34,7 +36,7 @@ thead {
     position: sticky;
     top: 0;
     z-index: 1001;
-    background-color: #f8f9fa;
+    background-color: #333333;
 }
 
 th {
@@ -42,9 +44,10 @@ th {
     top: 0;
     padding: 12px 15px;
     font-weight: bold;
-    border: 1px solid #dee2e6;
-    background-color: #f8f9fa;
-    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+    background-color: #333333;
+    border: 1px solid #404040;
+    color: #e0e0e0;
+    box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.3);
     white-space: nowrap;
     overflow: visible;
     min-width: 80px;
@@ -53,7 +56,7 @@ th {
 
 /* Styles pour le tri */
 th a {
-    color: #333;
+    color: #e0e0e0;
     text-decoration: none;
     display: flex;
     align-items: center;
@@ -84,8 +87,8 @@ th a.desc::after {
 }
 
 th a:hover {
-    color: #007bff;
-    background-color: rgba(0, 123, 255, 0.1);
+    color: #66b3ff;
+    background-color: rgba(102, 179, 255, 0.1);
 }
 
 /* Styles pour les cellules */
@@ -103,30 +106,33 @@ tbody {
     z-index: 1000;
 }
 
-tr:nth-child(even) { background-color: #f8f9fa; }
-tr:hover { background-color: #f5f5f5; }
+
+tr:nth-child(even) { background-color: #333333; }
+tr:hover { background-color: #404040; }
 
 /* Styles pour les valeurs positives/négatives */
-.positive { color: #28a745; }
-.negative { color: #dc3545; }
+.positive { color: #4caf50; }
+.negative { color: #f44336; }
 
 /* Style pour les cellules suspectes */
 td.suspicious {
-    background-color: rgba(255, 255, 0, 0.3) !important;
+    background-color: rgba(255, 193, 7, 0.2) !important;
+
     position: relative;
 }
 
 td.suspicious:hover {
-    background-color: rgba(255, 255, 0, 0.4) !important;
+    background-color: rgba(255, 193, 7, 0.3) !important;
+
 }
 
 /* Styles pour les filtres */
 .filters-panel {
-    background: #f8f9fa;
+    background: #2d2d2d;
     padding: 15px;
     margin: 20px 0;
     border-radius: 8px;
-    border: 1px solid #dee2e6;
+    border: 1px solid #404040;
 }
 
 .filters-panel h3 {
@@ -151,13 +157,15 @@ td.suspicious:hover {
 .filter-options input[type="number"] {
     width: 120px;
     padding: 5px;
-    border: 1px solid #ddd;
+    background-color: #333333;
+    border: 1px solid #404040;
+    color: #e0e0e0;
     border-radius: 4px;
 }
 
 /* Styles pour les boutons */
 #applyFilters {
-    background-color: #28a745;
+    background-color: #4caf50;
     color: white;
     border: none;
     padding: 6px 12px;
@@ -166,7 +174,7 @@ td.suspicious:hover {
 }
 
 #applyFilters:hover {
-    background-color: #218838;
+    background-color: #45a049;
 }
 
 /* Styles pour les seuils suspects */
@@ -177,21 +185,23 @@ td.suspicious:hover {
 .toggle-button {
     width: 100%;
     padding: 8px;
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
+    background: #333333;
+    border: 1px solid #404040;
+    color: #e0e0e0;
     border-radius: 4px;
     cursor: pointer;
     text-align: left;
 }
 
 .toggle-button:hover {
-    background-color: #e9ecef;
+    background-color: #404040;
 }
 
 .suspicious-thresholds {
-    background: #fff;
+    
     padding: 15px;
-    border: 1px solid #dee2e6;
+    background: #2d2d2d;
+    border: 1px solid #404040;
     border-radius: 4px;
     margin-top: 5px;
 }
@@ -209,7 +219,7 @@ td.suspicious:hover {
 .filter-stats {
     margin: 10px 0;
     padding: 10px;
-    background-color: #f5f5f5;
+    background-color: #2d2d2d;
     border-radius: 4px;
     display: flex;
     justify-content: space-between;
@@ -218,11 +228,11 @@ td.suspicious:hover {
 
 #visibleCount {
     font-weight: bold;
-    color: #666;
+    color: #b3b3b3;
 }
 
 .reset-button {
-    background-color: #ff4444;
+    background-color: #f44336;
     color: white;
     border: none;
     padding: 5px 10px;
@@ -231,7 +241,7 @@ td.suspicious:hover {
 }
 
 .reset-button:hover {
-    background-color: #cc0000;
+    background-color: #d32f2f;
 }
 
 /* Styles pour la modal de comparaison */
@@ -247,17 +257,18 @@ td.suspicious:hover {
 }
 
 .modal-content {
-    background-color: #fefefe;
+    background-color: #2d2d2d;
+    border: 1px solid #404040;
     margin: 5% auto;
     padding: 20px;
-    border: 1px solid #888;
+    
     width: 80%;
     max-width: 1200px;
     border-radius: 8px;
 }
 
 .close {
-    color: #aaa;
+    color: #b3b3b3;
     float: right;
     font-size: 28px;
     font-weight: bold;
@@ -265,7 +276,7 @@ td.suspicious:hover {
 }
 
 .close:hover {
-    color: #000;
+    color: #e0e0e0;
 }
 
 /* Styles pour la comparaison */
@@ -279,7 +290,7 @@ td.suspicious:hover {
     gap: 10px;
     margin: 10px 0;
     padding: 10px;
-    background: #f8f9fa;
+    background: #333333;
     border-radius: 4px;
 }
 
@@ -304,8 +315,8 @@ td.suspicious:hover {
 .tooltip .tooltiptext {
     visibility: hidden;
     width: 200px;
-    background-color: #333;
-    color: #fff;
+    background-color: #404040;
+    color: #e0e0e0;
     text-align: center;
     border-radius: 6px;
     padding: 5px;
@@ -336,7 +347,7 @@ input[type="checkbox"] {
 /* Style pour le bouton de comparaison */
 #compareButton {
     padding: 8px 16px;
-    background-color: #007bff;
+    background-color: #2196f3;
     color: white;
     border: none;
     border-radius: 4px;
@@ -344,11 +355,25 @@ input[type="checkbox"] {
 }
 
 #compareButton:disabled {
-    background-color: #ccc;
+    background-color: #666666;
     cursor: not-allowed;
 }
 
 #selectedCount {
     margin-left: 10px;
-    color: #666;
+    color: #b3b3b3;
+}
+
+/* Styles pour les inputs */
+input[type="number"],
+input[type="text"] {
+    background-color: #333333;
+    color: #e0e0e0;
+    border: 1px solid #404040;
+}
+
+/* Styles pour le focus des inputs */
+input:focus {
+    outline: none;
+    border-color: #2196f3;
 }
