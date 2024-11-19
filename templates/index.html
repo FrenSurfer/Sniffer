@@ -159,7 +159,7 @@
                 {% for token in tokens %}
                 <tr>
                     <td><input type="checkbox" class="token-select" data-address="{{ token.address }}"></td>
-                    <td>{{ token.symbol }}</td>
+                    <td style="cursor: pointer;" onclick="copyWithEffect(this, '{{ token.address }}')" title="Click to copy adress">{{ token.symbol }}</td>
                     <td>{{ token.name }}</td>
                     <td>{{ "{:,.0f}".format(token.liquidity).replace(',', ' ') }}</td>
                     <td>{{ "{:,.0f}".format(token.v24hUSD).replace(',', ' ') }}</td>

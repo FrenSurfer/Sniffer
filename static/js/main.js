@@ -22,6 +22,16 @@ document.addEventListener('DOMContentLoaded', function() {
         return parseFloat(value) || 0;
     }
 
+    window.copyWithEffect = function(element, address) {
+        navigator.clipboard.writeText(address);
+        element.style.transition = 'color 0.3s';
+        const originalColor = getComputedStyle(element).color;
+        element.style.color = '#28a745';
+        setTimeout(() => {
+            element.style.color = originalColor;
+        }, 500);
+    };
+
     // Fonction de tri globale
     window.sortTable = function(column) {
         const tbody = table.querySelector('tbody');
@@ -100,6 +110,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    
 
     // Gestion des filtres
     function applyFilters() {
