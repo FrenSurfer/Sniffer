@@ -13,6 +13,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const thresholdsPanel = document.getElementById('thresholdsPanel');
     const toggleWeightsButton = document.getElementById('toggleWeights');
     const weightsPanel = document.getElementById('weightsPanel');
+    const toggleColumnsButton = document.getElementById('toggleColumns');
+    const columnsPanel = document.getElementById('columnsPanel');
 
     // Fonctions utilitaires
     function parseNumericValue(value) {
@@ -111,7 +113,59 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    
+    function toggleColumnVisibility(columnIndex, isVisible) {
+        const display = isVisible ? '' : 'none';
+        
+        // Masquer/afficher les cellules d'en-tête
+        document.querySelectorAll(`th:nth-child(${columnIndex + 1})`).forEach(th => {
+            th.style.display = display;
+        });
+        
+        // Masquer/afficher les cellules du corps
+        document.querySelectorAll(`td:nth-child(${columnIndex + 1})`).forEach(td => {
+            td.style.display = display;
+        });
+    }
+
+    function saveColumnVisibility() {
+        const visibility = {};
+        document.querySelectorAll('.column-options input[type="checkbox"]').forEach(checkbox => {
+            visibility[checkbox.dataset.column] = checkbox.checked;
+        });
+        localStorage.setItem('columnVisibility', JSON.stringify(visibility));
+    }
+
+    function restoreColumnVisibility() {
+        const savedVisibility = localStorage.getItem('columnVisibility');
+        if (savedVisibility) {
+            const visibility = JSON.parse(savedVisibility);
+            Object.entries(visibility).forEach(([column, isVisible]) => {
+                const checkbox = document.querySelector(`.column-options input[data-column="${column}"]`);
+                if (checkbox) {
+                    checkbox.checked = isVisible;
+                    toggleColumnVisibility(getColumnIndex(column), isVisible);
+                }
+            });
+        }
+    }
+
+     // Gestion de la visibilité des colonnes
+     toggleColumnsButton.addEventListener('click', function() {
+        columnsPanel.style.display = columnsPanel.style.display === 'none' ? 'block' : 'none';
+        this.textContent = `Visibilité des colonnes ${columnsPanel.style.display === 'none' ? '▼' : '▲'}`;
+    });
+
+    // Event listeners pour les checkboxes des colonnes
+    document.querySelectorAll('.column-options input[type="checkbox"]').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const columnName = this.dataset.column;
+            const columnIndex = getColumnIndex(columnName);
+            const isVisible = this.checked;
+            
+            saveColumnVisibility();
+            toggleColumnVisibility(columnIndex, isVisible);
+        });
+    });
 
     // Gestion des filtres
     function applyFilters() {
@@ -404,6 +458,7 @@ document.addEventListener('DOMContentLoaded', function() {
         applyFilters();
         updateSuspiciousHighlight();
         updateWeightTotal();
+        restoreColumnVisibility();
     }
 
     // Démarrer l'initialisation

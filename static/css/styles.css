@@ -377,3 +377,28 @@ input:focus {
     outline: none;
     border-color: #2196f3;
 }
+
+.column-visibility-container {
+    margin-bottom: 15px;
+}
+
+.column-toggles {
+    padding: 15px;
+    background: #2d2d2d;
+    border: 1px solid #404040;
+    border-radius: 4px;
+    margin-top: 5px;
+}
+
+.column-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.column-options label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}

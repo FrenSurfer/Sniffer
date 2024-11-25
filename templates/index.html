@@ -112,6 +112,27 @@
         </div>
     </div>
 
+    <div class="column-visibility-container">
+        <button id="toggleColumns" class="toggle-button">
+            Visibilité des colonnes ▼
+        </button>
+        <div class="column-toggles" id="columnsPanel" style="display: none;">
+            <div class="column-options">
+                <label><input type="checkbox" data-column="symbol" checked> Symbole</label>
+                <label><input type="checkbox" data-column="name" checked> Nom</label>
+                <label><input type="checkbox" data-column="liquidity" checked> Liquidité</label>
+                <label><input type="checkbox" data-column="v24hUSD" checked> Volume 24h</label>
+                <label><input type="checkbox" data-column="mc" checked> Market Cap</label>
+                <label><input type="checkbox" data-column="v24hChangePercent" checked> Variation Prix</label>
+                <label><input type="checkbox" data-column="volume_liquidity_ratio" checked> Vol/Liq</label>
+                <label><input type="checkbox" data-column="volume_mc_ratio" checked> Vol/MC</label>
+                <label><input type="checkbox" data-column="liquidity_mc_ratio" checked> Liq/MC</label>
+                <label><input type="checkbox" data-column="performance" checked> Score</label>
+                <label><input type="checkbox" data-column="is_pump" > Pump</label>
+            </div>
+        </div>
+    </div>
+
     <!-- Contrôles de comparaison -->
     <div class="comparison-controls">
         <button id="compareButton" disabled>Comparer les tokens sélectionnés</button>
