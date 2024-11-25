@@ -402,3 +402,14 @@ input:focus {
     gap: 8px;
     cursor: pointer;
 }
+
+.bubblemaps-link {
+    color: #e0e0e0;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.bubblemaps-link:hover {
+    color: #2196f3;
+}

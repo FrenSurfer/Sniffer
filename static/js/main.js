@@ -98,7 +98,8 @@ document.addEventListener('DOMContentLoaded', function() {
             'volume_mc_ratio': 8,
             'liquidity_mc_ratio': 9,
             'performance': 10,
-            'is_pump': 11
+            'is_pump': 11,
+            'bubblemaps': 12 
         };
         return columnMap[column];
     }

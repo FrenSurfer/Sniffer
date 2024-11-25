@@ -129,6 +129,7 @@
                 <label><input type="checkbox" data-column="liquidity_mc_ratio" checked> Liq/MC</label>
                 <label><input type="checkbox" data-column="performance" checked> Score</label>
                 <label><input type="checkbox" data-column="is_pump" > Pump</label>
+                <label><input type="checkbox" data-column="bubblemaps" > Bubblemaps</label>
             </div>
         </div>
     </div>
@@ -170,9 +171,14 @@
                         Score
                         <span class="tooltiptext">Score combiné basé sur les ratios</span>
                     </a></th>
+
                     <th><a href="#" data-column="is_pump" onclick="sortTable('is_pump'); return false;" class="tooltip">
                         Pump
                         <span class="tooltiptext">Token avec adresse finissant par 'pump'</span>
+                    </a></th>
+                    <th><a href="#" data-column="bubblemaps" class="tooltip">
+                        Bubblemaps
+                        <span class="tooltiptext">Voir sur Bubblemaps</span>
                     </a></th>
                 </tr>
             </thead>
@@ -201,6 +207,14 @@
                         {{ "{:+.2f}".format(token.performance) }}
                     </td>
                     <td style="text-align: center;">{{ "✓" if token.is_pump else "" }}</td>
+                    <td style="text-align: center;">
+                        <a href="https://app.bubblemaps.io/sol/token/{{ token.address }}" 
+                           target="_blank" 
+                           class="bubblemaps-link" 
+                           title="Voir sur Bubblemaps">
+                            🔍
+                        </a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
