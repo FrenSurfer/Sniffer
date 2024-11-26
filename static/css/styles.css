@@ -433,7 +433,7 @@ input:focus {
 
 .table-container, 
 .modal-content, 
-thead, td, 
+thead, 
 th {
     overflow: visible !important;
 }
