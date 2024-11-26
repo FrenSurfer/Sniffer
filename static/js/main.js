@@ -60,12 +60,15 @@ document.addEventListener('DOMContentLoaded', function() {
             let bValue = b.cells[getColumnIndex(column)].textContent.trim();
             
             // Conversion des valeurs selon le type de colonne
-            if (column === 'liquidity' || column === 'v24hUSD' || column === 'mc') {
+            if (column === 'liquidity' || column === 'v24hUSD' || column === 'mc' || 
+                column === 'holders' || column === 'unique_wallets_24h') {  // Ajout des nouvelles colonnes numériques
                 aValue = parseFloat(aValue.replace(/[^\d.-]/g, ''));
                 bValue = parseFloat(bValue.replace(/[^\d.-]/g, ''));
-            } else if (column === 'v24hChangePercent' || column.includes('ratio') || column === 'performance') {
+            } else if (column === 'v24hChangePercent' || column.includes('ratio') || 
+                       column === 'performance' || column === 'wallet_change') {  // Ajout de wallet_change
                 aValue = parseFloat(aValue.replace(/[%+]/g, ''));
                 bValue = parseFloat(bValue.replace(/[%+]/g, ''));
+            
             } else if (column === 'is_pump') {
                 aValue = aValue === '✓' ? 1 : 0;
                 bValue = bValue === '✓' ? 1 : 0;
@@ -99,7 +102,10 @@ document.addEventListener('DOMContentLoaded', function() {
             'liquidity_mc_ratio': 9,
             'performance': 10,
             'is_pump': 11,
-            'bubblemaps': 12 
+            'bubblemaps': 12,
+            'holders': 13,         
+            'unique_wallets_24h': 14,
+            'wallet_change': 15
         };
         return columnMap[column];
     }
@@ -177,7 +183,9 @@ document.addEventListener('DOMContentLoaded', function() {
             mcapMin: parseNumericValue(document.getElementById('minMc').value),
             mcapMax: parseNumericValue(document.getElementById('maxMc').value),
             suspicious: document.getElementById('filterSuspicious').checked,
-            hide24h: document.getElementById('filter24h').checked
+            hide24h: document.getElementById('filter24h').checked,
+            minHolders: parseNumericValue(document.getElementById('minHolders').value),
+            minWallets24h: parseNumericValue(document.getElementById('minWallets24h').value)
         };
         
         let visibleCount = 0;
@@ -189,7 +197,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 mcap: parseNumericValue(row.cells[5].textContent),
                 priceChange: parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, '')),
                 isSuspicious: row.querySelector('.suspicious') !== null,
-                isLessThan24h: parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, '')) === 0.00
+                isLessThan24h: parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, '')) === 0.00,
+                holders: parseNumericValue(row.cells[getColumnIndex('holders')].textContent),
+                wallets24h: parseNumericValue(row.cells[getColumnIndex('unique_wallets_24h')].textContent)
+            
             };
             
             let visible = true;
@@ -200,6 +211,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (filters.mcapMax && values.mcap > filters.mcapMax) visible = false;
             if (filters.suspicious && values.isSuspicious) visible = false;
             if (filters.hide24h && values.isLessThan24h) visible = false;
+            if (filters.minHolders && values.holders < filters.minHolders) visible = false;
+            if (filters.minWallets24h && values.wallets24h < filters.minWallets24h) visible = false;
             
             row.style.display = visible ? '' : 'none';
             if (visible) visibleCount++;
@@ -228,6 +241,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('maxMc').value = '';
         document.getElementById('filterSuspicious').checked = false;
         document.getElementById('filter24h').checked = true;
+        document.getElementById('minHolders').value = '';
+        document.getElementById('minWallets24h').value = '';
         applyFilters();
     });
 
@@ -249,27 +264,36 @@ document.addEventListener('DOMContentLoaded', function() {
         const volLiqThreshold = parseFloat(document.getElementById('volLiqThreshold').value);
         const volMcThreshold = parseFloat(document.getElementById('volMcThreshold').value);
         const liqMcThreshold = parseFloat(document.getElementById('liqMcThreshold').value);
-
+        const wallets24hThreshold = parseFloat(document.getElementById('wallets24hThreshold').value);
+        const holdersThreshold = parseFloat(document.getElementById('holdersThreshold').value);
+    
         const rows = document.querySelectorAll('tbody tr');
         rows.forEach(row => {
             const priceChange = parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, ''));
             const volLiqRatio = parseFloat(row.cells[7].textContent);
             const volMcRatio = parseFloat(row.cells[8].textContent);
             const liqMcRatio = parseFloat(row.cells[9].textContent);
-
+            const wallets24h = parseNumericValue(row.cells[getColumnIndex('unique_wallets_24h')].textContent);
+            const holders = parseNumericValue(row.cells[getColumnIndex('holders')].textContent);
+    
+            // Mise à jour des classes suspicious
             row.cells[6].classList.toggle('suspicious', priceChange < priceChangeMin || priceChange > priceChangeMax);
             row.cells[7].classList.toggle('suspicious', volLiqRatio > volLiqThreshold);
             row.cells[8].classList.toggle('suspicious', volMcRatio > volMcThreshold);
             row.cells[9].classList.toggle('suspicious', liqMcRatio < liqMcThreshold);
+            row.cells[getColumnIndex('unique_wallets_24h')].classList.toggle('suspicious', wallets24h < wallets24hThreshold); // Inversé
+            row.cells[getColumnIndex('holders')].classList.toggle('suspicious', holders < holdersThreshold); // Inversé
         });
-
+    
         // Sauvegarder les seuils
         const thresholds = {
             priceChangeMin: document.getElementById('priceChangeMin').value,
             priceChangeMax: document.getElementById('priceChangeMax').value,
             volLiqThreshold: document.getElementById('volLiqThreshold').value,
             volMcThreshold: document.getElementById('volMcThreshold').value,
-            liqMcThreshold: document.getElementById('liqMcThreshold').value
+            liqMcThreshold: document.getElementById('liqMcThreshold').value,
+            wallets24hThreshold: document.getElementById('wallets24hThreshold').value,
+            holdersThreshold: document.getElementById('holdersThreshold').value
         };
         localStorage.setItem('tokenThresholds', JSON.stringify(thresholds));
     }
@@ -355,6 +379,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <label><input type="checkbox" data-metric="vol-mc" checked> Vol/MC</label>
                         <label><input type="checkbox" data-metric="liq-mc" checked> Liq/MC</label>
                         <label><input type="checkbox" data-metric="score" checked> Score</label>
+                        <label><input type="checkbox" data-metric="holders" checked> Holders</label>
+                        <label><input type="checkbox" data-metric="wallets" checked> Wallets 24h</label>
+                        <label><input type="checkbox" data-metric="wallet-change" checked> Δ Wallets</label>
                     </div>
                 </div>
                 <table>
@@ -393,6 +420,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     <tr class="metric-row" data-metric="score">
                         <td>Score</td>
                         ${tokens.map(t => `<td>${t.performance.toFixed(2)}</td>`).join('')}
+                    </tr>
+                    <tr class="metric-row" data-metric="holders">
+                        <td>Holders</td>
+                        ${tokens.map(t => `<td>${t.holders.toLocaleString()}</td>`).join('')}
+                    </tr>
+                    <tr class="metric-row" data-metric="wallets">
+                        <td>Wallets 24h</td>
+                        ${tokens.map(t => `<td>${t.unique_wallets_24h.toLocaleString()}</td>`).join('')}
+                    </tr>
+                    <tr class="metric-row" data-metric="wallet-change">
+                        <td>Δ Wallets (%)</td>
+                        ${tokens.map(t => `<td class="${t.wallet_change > 0 ? 'positive' : 'negative'}">${t.wallet_change.toFixed(2)}%</td>`).join('')}
                     </tr>
                 </table>
             `;

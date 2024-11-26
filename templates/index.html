@@ -43,6 +43,14 @@
                         Ratio Liq/MC suspect <
                         <input type="number" id="liqMcThreshold" value="0.05" step="0.01">
                     </label>
+                    <label>
+                        Wallets 24h suspect <
+                        <input type="number" id="wallets24hThreshold" value="100" step="10">
+                    </label>
+                    <label>
+                        Holders suspect <
+                        <input type="number" id="holdersThreshold" value="500" step="50">
+                    </label>
                 </div>
             </div>
         </div>
@@ -72,6 +80,14 @@
             <label>
                 <input type="number" id="maxMc" placeholder="MCap max ($)">
                 Market Cap maximum
+            </label>
+            <label>
+                <input type="number" id="minHolders" placeholder="Holders min">
+                Holders minimum
+            </label>
+            <label>
+                <input type="number" id="minWallets24h" placeholder="Wallets 24h min">
+                Wallets 24h minimum
             </label>
         </div>
         <button id="applyFilters">Appliquer les filtres</button>
@@ -135,6 +151,18 @@
                 <label><input type="checkbox" data-column="performance" checked> Score</label>
                 <label><input type="checkbox" data-column="is_pump" > Pump</label>
                 <label><input type="checkbox" data-column="bubblemaps" > Bubblemaps</label>
+                <label>
+                    <input type="checkbox" data-column="holders" checked>
+                    Holders
+                </label>
+                <label>
+                    <input type="checkbox" data-column="unique_wallets_24h" checked>
+                    Wallets 24h
+                </label>
+                <label>
+                    <input type="checkbox" data-column="wallet_change" checked>
+                    Δ Wallets
+                </label>
             </div>
         </div>
     </div>
@@ -185,6 +213,24 @@
                         Bubblemaps
                         <span class="tooltiptext">Voir sur Bubblemaps</span>
                     </a></th>
+                    <th>
+                        <a href="#" data-column="holders" onclick="sortTable('holders'); return false;" class="tooltip">
+                            Holders
+                            <span class="tooltiptext">Nombre total de détenteurs</span>
+                        </a>
+                    </th>
+                    <th>
+                        <a href="#" data-column="unique_wallets_24h" onclick="sortTable('unique_wallets_24h'); return false;" class="tooltip">
+                            Wallets 24h
+                            <span class="tooltiptext">Wallets uniques ayant tradé en 24h</span>
+                        </a>
+                    </th>
+                    <th>
+                        <a href="#" data-column="wallet_change" onclick="sortTable('wallet_change'); return false;" class="tooltip">
+                            Δ Wallets (%)
+                            <span class="tooltiptext">Évolution des wallets uniques</span>
+                        </a>
+                    </th>
                 </tr>
             </thead>
             <tbody>
@@ -219,6 +265,11 @@
                            title="Voir sur Bubblemaps">
                             🔍
                         </a>
+                    </td>
+                    <td>{{ "{:,.0f}".format(token.holders|float) }}</td>
+                    <td>{{ "{:,.0f}".format(token.unique_wallets_24h|float) }}</td>
+                    <td class="{{ 'positive' if token.wallet_change > 0 else 'negative' }}">
+                        {{ "{:+.2f}%".format(token.wallet_change|float) }}
                     </td>
                 </tr>
                 {% endfor %}

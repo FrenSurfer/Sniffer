@@ -15,6 +15,7 @@ body {
     overflow-x: hidden;
     margin: 20px 0;
     width: 100%;
+    overflow: visible !important;
 }
 
 /* Style général du tableau */
@@ -38,6 +39,9 @@ thead {
     z-index: 1001;
     background-color: #333333;
 }
+thead th .tooltip .tooltiptext {
+    z-index: 9999;
+}
 
 th {
     position: sticky;
@@ -49,7 +53,7 @@ th {
     color: #e0e0e0;
     box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.3);
     white-space: nowrap;
-    overflow: visible;
+    overflow: visible !important;
     min-width: 80px;
     z-index: 1001;
 }
@@ -321,15 +325,27 @@ td.suspicious:hover {
     border-radius: 6px;
     padding: 5px;
     position: absolute;
-    z-index: 1002;
-    bottom: 125%;
-    left: 50%;
-    margin-left: -100px;
+    z-index: 9999;
+    top: 50%;  /* Centré verticalement */
+    right: 100%;  /* À gauche de l'élément */
+    transform: translateY(-50%);  /* Ajustement du centrage vertical */
+    margin-right: 10px;  /* Espace entre le tooltip et l'élément */
     opacity: 0;
     transition: opacity 0.3s;
     font-size: 12px;
     white-space: normal;
     pointer-events: none;
+}
+
+.tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent transparent transparent #404040;
 }
 
 .tooltip:hover .tooltiptext {
@@ -412,4 +428,17 @@ input:focus {
 
 .bubblemaps-link:hover {
     color: #2196f3;
+}
+
+
+.table-container, 
+.modal-content, 
+thead, td, 
+th {
+    overflow: visible !important;
+}
+
+/* Ajustement pour les cellules du tableau */
+th {
+    position: relative;
 }

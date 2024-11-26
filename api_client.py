@@ -2,7 +2,6 @@ import requests
 from requests.exceptions import RequestException
 import logging
 import time
-import pickle
 import pandas as pd
 from datetime import datetime, timedelta
 import os
@@ -28,17 +27,38 @@ class BirdeyeAPIClient:
             "X-API-KEY": api_key
         }
         self.cache = {}
-        self.rate_limit = 1000  # Nouvelle limite RPM
+        self.rate_limit = 1000
         self.min_request_interval = 0.06
         self.cache_file = 'data/token_cache.csv'
-        self.cache_duration = timedelta(minutes=30)  # Durée de validité du cache
+        self.cache_duration = timedelta(minutes=30)
+        self.request_count = 0
+        self.last_reset = time.time()
         os.makedirs('data', exist_ok=True)
 
+    def check_rate_limit(self):
+        """Vérifie et gère la limite de taux"""
+        current_time = time.time()
+        if current_time - self.last_reset >= 60:
+            self.request_count = 0
+            self.last_reset = current_time
+        
+        if self.request_count >= self.rate_limit:
+            wait_time = 60 - (current_time - self.last_reset)
+            if wait_time > 0:
+                logger.warning(f"Rate limit atteint, attente de {wait_time:.2f}s")
+                time.sleep(wait_time)
+                self.request_count = 0
+                self.last_reset = time.time()
+
     def get_token_list(self, offset=0, limit=50):
+        """Récupère la liste des tokens"""
         cache_key = f"{offset}-{limit}"
         if cache_key in self.cache:
             logger.info("Returning cached data")
             return self.cache[cache_key]
+
+        self.check_rate_limit()
+        self.request_count += 1
 
         endpoint = f"{self.base_url}/defi/tokenlist"
         params = {
@@ -60,67 +80,106 @@ class BirdeyeAPIClient:
         self.cache[cache_key] = response
         return response
 
+    def get_token_overview(self, address):
+        """Récupère les données détaillées d'un token"""
+        self.check_rate_limit()
+        self.request_count += 1
+
+        endpoint = f"{self.base_url}/defi/token_overview"
+        params = {"address": address}
+        
+        def request_func():
+            response = requests.get(
+                endpoint, 
+                headers=self.headers, 
+                params=params,
+                timeout=10
+            )
+            response.raise_for_status()
+            return response.json()
+        
+        response = retry_request(request_func)
+        if response and response.get('success'):
+            data = response.get('data', {})
+            return {
+                'holder_count': data.get('holder', 0),
+                'unique_wallet_24h': data.get('uniqueWallet24h', 0),
+                'unique_wallet_change': data.get('uniqueWallet24hChangePercent', 0)
+            }
+        return None
+
     def get_all_tokens(self, total_desired=500, use_cache=True):
         """Récupère tous les tokens avec gestion du cache"""
+        start_time = time.time()
+        request_count = 0
+
         if use_cache:
             cached_data = self.load_from_cache()
             if cached_data:
+                logger.info("Utilisation des données du cache")
                 return cached_data
 
-        # Récupération des données depuis l'API
         all_tokens = []
-        offset = 0
-        limit = 50
-
-        while len(all_tokens) < total_desired:
-            logger.info(f"Récupération des tokens {offset} à {offset + limit}...")
-            response = self.get_token_list(offset=offset, limit=limit)
+        batch_size = min(50, self.rate_limit // 2)
+        
+        for offset in range(0, total_desired, batch_size):
+            logger.info(f"Récupération des tokens {offset} à {offset + batch_size}...")
+            response = self.get_token_list(offset=offset, limit=batch_size)
+            request_count += 1
             
             if not response.get('success'):
                 logger.error(f"Erreur lors de la récupération des tokens: {response.get('error')}")
                 break
-                
+            
             tokens = response.get('data', {}).get('tokens', [])
             if not tokens:
                 break
-                
-            all_tokens.extend(tokens)
-            offset += limit
+
+            # Traitement par batch pour les overviews
+            for token in tokens:
+                logger.info(f"Récupération des holders pour {token['symbol']}")
+                overview_data = self.get_token_overview(token['address'])
+                request_count += 1
+                if overview_data:
+                    token.update(overview_data)
+                time.sleep(self.min_request_interval)
             
-            time.sleep(self.min_request_interval)
+            all_tokens.extend(tokens)
             
             if len(all_tokens) >= total_desired:
                 all_tokens = all_tokens[:total_desired]
                 break
 
-        logger.info(f"Total des tokens récupérés: {len(all_tokens)}")
+            time.sleep(self.min_request_interval)
+
+        # Statistiques finales
+        end_time = time.time()
+        duration = end_time - start_time
+        rpm = (request_count / duration) * 60
         
+        logger.info(f"""
+        Statistiques de récupération:
+        - Temps total: {duration:.2f}s
+        - Requêtes totales: {request_count}
+        - RPM effectif: {rpm:.2f}
+        - Tokens récupérés: {len(all_tokens)}
+        """)
+
         # Sauvegarder dans le cache
         if all_tokens:
             self.save_to_cache(all_tokens)
         
         return all_tokens
 
-        logger.info(f"Total des tokens récupérés: {len(all_tokens)}")
-        self.save_to_cache(all_tokens)
-        return all_tokens
-
     def save_to_cache(self, tokens):
         """Sauvegarde les données dans le cache CSV"""
         try:
-            # Créer un DataFrame avec les tokens
             df = pd.DataFrame(tokens)
-            
-            # Ajouter le timestamp du cache
             df['cache_timestamp'] = datetime.now()
-            
-            # Sauvegarder en CSV
             df.to_csv(self.cache_file, index=False)
             logger.info(f"Données sauvegardées dans le cache ({len(tokens)} tokens)")
-
         except Exception as e:
             logger.error(f"Erreur lors de la sauvegarde du cache: {e}")
-
 
     def load_from_cache(self):
         """Charge les données depuis le cache CSV"""
@@ -128,16 +187,13 @@ class BirdeyeAPIClient:
             if not os.path.exists(self.cache_file):
                 return None
 
-            # Lire le fichier cache
             df = pd.read_csv(self.cache_file)
             cache_timestamp = pd.to_datetime(df['cache_timestamp'].iloc[0])
             
-            # Vérifier si le cache est encore valide
             if datetime.now() - cache_timestamp > self.cache_duration:
                 logger.info("Cache expiré")
                 return None
 
-            # Convertir le DataFrame en liste de dictionnaires
             tokens = df.drop('cache_timestamp', axis=1).to_dict('records')
             logger.info(f"Données chargées depuis le cache ({len(tokens)} tokens)")
             return tokens
