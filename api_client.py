@@ -3,6 +3,9 @@ from requests.exceptions import RequestException
 import logging
 import time
 import pickle
+import pandas as pd
+from datetime import datetime, timedelta
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +30,9 @@ class BirdeyeAPIClient:
         self.cache = {}
         self.rate_limit = 1000  # Nouvelle limite RPM
         self.min_request_interval = 0.06
+        self.cache_file = 'data/token_cache.csv'
+        self.cache_duration = timedelta(minutes=30)  # Durée de validité du cache
+        os.makedirs('data', exist_ok=True)
 
     def get_token_list(self, offset=0, limit=50):
         cache_key = f"{offset}-{limit}"
@@ -55,16 +61,17 @@ class BirdeyeAPIClient:
         return response
 
     def get_all_tokens(self, total_desired=500, use_cache=True):
+        """Récupère tous les tokens avec gestion du cache"""
         if use_cache:
             cached_data = self.load_from_cache()
             if cached_data:
-                logger.info("Loaded tokens from cache.")
                 return cached_data
 
+        # Récupération des données depuis l'API
         all_tokens = []
         offset = 0
-        limit = 50  # On garde 50 par requête pour la stabilité
-        
+        limit = 50
+
         while len(all_tokens) < total_desired:
             logger.info(f"Récupération des tokens {offset} à {offset + limit}...")
             response = self.get_token_list(offset=offset, limit=limit)
@@ -74,44 +81,67 @@ class BirdeyeAPIClient:
                 break
                 
             tokens = response.get('data', {}).get('tokens', [])
-            if not tokens:  # Plus de tokens disponibles
+            if not tokens:
                 break
                 
             all_tokens.extend(tokens)
             offset += limit
             
-            time.sleep(self.min_request_interval)  # Pause minimale entre les requêtes
+            time.sleep(self.min_request_interval)
             
             if len(all_tokens) >= total_desired:
                 all_tokens = all_tokens[:total_desired]
                 break
 
         logger.info(f"Total des tokens récupérés: {len(all_tokens)}")
+        
+        # Sauvegarder dans le cache
+        if all_tokens:
+            self.save_to_cache(all_tokens)
+        
+        return all_tokens
+
+        logger.info(f"Total des tokens récupérés: {len(all_tokens)}")
         self.save_to_cache(all_tokens)
         return all_tokens
 
-    def save_to_cache(self, data, filename='__pycache__/token_cache.pkl'):
-        cache_data = {
-            'timestamp': time.time(),
-            'data': data
-        }
-        with open(filename, 'wb') as f:
-            pickle.dump(cache_data, f)
-        logger.info("Data saved to cache.")
-
-    def load_from_cache(self, filename='__pycache__/token_cache.pkl', max_age=60):  # Réduit à 60 secondes
+    def save_to_cache(self, tokens):
+        """Sauvegarde les données dans le cache CSV"""
         try:
-            with open(filename, 'rb') as f:
-                cache_data = pickle.load(f)
-            current_time = time.time()
-            cache_age = current_time - cache_data['timestamp']
-            logger.info(f"Cache age: {cache_age} seconds")
-            if cache_age < max_age:
-                logger.info("Using cached data.")
-                return cache_data['data']
-            else:
-                logger.info("Cache is too old.")
+            # Créer un DataFrame avec les tokens
+            df = pd.DataFrame(tokens)
+            
+            # Ajouter le timestamp du cache
+            df['cache_timestamp'] = datetime.now()
+            
+            # Sauvegarder en CSV
+            df.to_csv(self.cache_file, index=False)
+            logger.info(f"Données sauvegardées dans le cache ({len(tokens)} tokens)")
+
+        except Exception as e:
+            logger.error(f"Erreur lors de la sauvegarde du cache: {e}")
+
+
+    def load_from_cache(self):
+        """Charge les données depuis le cache CSV"""
+        try:
+            if not os.path.exists(self.cache_file):
                 return None
-        except (FileNotFoundError, EOFError):
-            logger.info("Cache file not found or empty.")
+
+            # Lire le fichier cache
+            df = pd.read_csv(self.cache_file)
+            cache_timestamp = pd.to_datetime(df['cache_timestamp'].iloc[0])
+            
+            # Vérifier si le cache est encore valide
+            if datetime.now() - cache_timestamp > self.cache_duration:
+                logger.info("Cache expiré")
+                return None
+
+            # Convertir le DataFrame en liste de dictionnaires
+            tokens = df.drop('cache_timestamp', axis=1).to_dict('records')
+            logger.info(f"Données chargées depuis le cache ({len(tokens)} tokens)")
+            return tokens
+
+        except Exception as e:
+            logger.error(f"Erreur lors du chargement du cache: {e}")
             return None

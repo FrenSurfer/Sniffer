@@ -22,25 +22,28 @@ SORT_OPTIONS = {
 	'mcap': 'Market Cap'
 }
 
-def fetch_token_data(sort_by='volume'):
-	logger.info(f"Récupération des données des tokens (tri par {sort_by})...")
-	try:
-		tokens = client.get_all_tokens(total_desired=500)
-		
-		if not tokens:
-			logger.error("Aucun token récupéré")
-			return
-		
-		logger.info(f"Nombre total de tokens récupérés: {len(tokens)}")
-		
-		df = process_token_list(tokens)
-		global token_data
-		token_data = df.to_dict('records')
-		logger.info(f"Données mises à jour. {len(token_data)} tokens affichés.")
-		
-	except Exception as e:
-		logger.error(f"Erreur lors de la récupération des données: {str(e)}")
-		logger.exception(e)
+def fetch_token_data(sort_by='volume', force_refresh=False):
+    logger.info(f"Récupération des données des tokens (tri par {sort_by})...")
+    try:
+        tokens = client.get_all_tokens(
+            total_desired=500,
+            use_cache=not force_refresh  # Utiliser le cache sauf si force_refresh=True
+        )
+        
+        if not tokens:
+            logger.error("Aucun token récupéré")
+            return
+        
+        logger.info(f"Nombre total de tokens récupérés: {len(tokens)}")
+        
+        df = process_token_list(tokens)
+        global token_data
+        token_data = df.to_dict('records')
+        logger.info(f"Données mises à jour. {len(token_data)} tokens affichés.")
+        
+    except Exception as e:
+        logger.error(f"Erreur lors de la récupération des données: {str(e)}")
+        logger.exception(e)
 
 @app.route('/')
 def index():
@@ -63,6 +66,21 @@ def index():
 						 sort_order=sort_order,
 						 api_sort=api_sort,
 						 sort_options=SORT_OPTIONS)
+
+
+@app.route('/refresh-cache')
+def refresh_cache():
+    try:
+        fetch_token_data(force_refresh=True)
+        return jsonify({
+            'success': True,
+            'message': 'Cache rafraîchi avec succès'
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 @app.route('/compare', methods=['POST'])
 def compare_tokens():

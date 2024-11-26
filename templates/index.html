@@ -12,6 +12,11 @@
 
 
     <!-- Filtres -->
+    <div class="controls">
+        <button onclick="refreshCache()" class="refresh-button">
+            Refresh data
+        </button>
+    </div>
     <div class="filters-panel">
         <div class="suspicious-thresholds-container">
             <button id="toggleThresholds" class="toggle-button">
@@ -235,5 +240,22 @@
 
     <!-- Script -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script>
+        function refreshCache() {
+            fetch('/refresh-cache')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();  // Recharger la page
+                    } else {
+                        alert('Erreur lors du rafraîchissement: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert('Erreur lors du rafraîchissement des données');
+                });
+        }
+    </script>
 </body>
 </html>
