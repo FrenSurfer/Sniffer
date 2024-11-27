@@ -303,6 +303,60 @@ document.addEventListener('DOMContentLoaded', function() {
         input.addEventListener('change', updateSuspiciousHighlight);
     });
 
+    // Fonction de recherche
+    const searchInput = document.getElementById('tokenSearch');
+    const clearSearchBtn = document.getElementById('clearSearchBtn');
+
+    function searchTokens() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const rows = document.querySelectorAll('table tbody tr');
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const symbol = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+            const name = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+            const address = row.querySelector('.token-select').dataset.address.toLowerCase();
+
+            if (searchTerm === '' || 
+                symbol.includes(searchTerm) || 
+                name.includes(searchTerm) || 
+                address.includes(searchTerm)) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        document.getElementById('visibleCount').textContent = `${visibleCount} tokens affichés`;
+    }
+
+    function clearSearch() {
+        searchInput.value = '';
+        searchTokens();
+    }
+
+    // Event listeners pour la recherche
+    searchInput.addEventListener('input', searchTokens);
+    clearSearchBtn.addEventListener('click', clearSearch);
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchTokens();
+        }
+    });
+    // Ajouter les event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('tokenSearch');
+        searchInput.addEventListener('input', searchTokens);
+        
+        // Ajouter la possibilité de presser Entrée pour effectuer la recherche
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchTokens();
+            }
+        });
+    });
+
     function updateWeightTotal() {
         const weights = [
             parseFloat(document.getElementById('priceChangeWeight').value) || 0,

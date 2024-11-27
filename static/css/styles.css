@@ -442,3 +442,30 @@ th {
 th {
     position: relative;
 }
+.search-container {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 10px;
+}
+
+.search-input {
+    padding: 8px;
+    border: 1px solid #404040;
+    border-radius: 4px;
+    width: 200px;
+    margin-right: 5px;
+    background-color: #333333;
+    color: #e0e0e0;
+}
+
+.clear-search {
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 5px;
+}
+
+.clear-search:hover {
+    color: #e0e0e0;
+}

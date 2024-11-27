@@ -16,6 +16,14 @@
         <button onclick="refreshCache()" class="refresh-button">
             Refresh data
         </button>
+
+        <div class="search-container"></div>
+        <input type="text" 
+               id="tokenSearch" 
+               placeholder="Rechercher un token..." 
+               class="search-input">
+        <button onclick="clearSearch()" class="clear-search">✕</button>
+    </div>
     </div>
     <div class="filters-panel">
         <div class="suspicious-thresholds-container">
@@ -172,6 +180,10 @@
         <button id="compareButton" disabled>Comparer les tokens sélectionnés</button>
         <span id="selectedCount">(0 sélectionné)</span>
     </div>
+
+
+    
+
 
     {% if tokens %}
     <div class="table-container">
