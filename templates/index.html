@@ -33,6 +33,13 @@
             <div class="suspicious-thresholds" id="thresholdsPanel" style="display: none;">
                 <div class="filter-options">
                     <label>
+                        Variation volume suspect (%)
+                        <div class="threshold-inputs">
+                            <input type="number" id="volumeChangeMin" placeholder="Min" value="-50">
+                            <input type="number" id="volumeChangeMax" placeholder="Max" value="100">
+                        </div>
+                    </label>
+                    <label>
                         Variation prix suspect (%)
                         <div class="threshold-inputs">
                             <input type="number" id="priceChangeMin" placeholder="Min" value="-50">
@@ -80,7 +87,7 @@
                 <input type="number" id="minVolume" placeholder="Volume min ($)">
                 Volume minimum
             </label>
-            <!-- Nouveaux filtres Market Cap -->
+           
             <label>
                 <input type="number" id="minMc" placeholder="MCap min ($)">
                 Market Cap minimum
@@ -97,6 +104,14 @@
                 <input type="number" id="minWallets24h" placeholder="Wallets 24h min">
                 Wallets 24h minimum
             </label>
+            <label>
+                <input type="number" id="minPriceChange" placeholder="Variation prix min (%)">
+                Variation prix minimum
+            </label>
+            <label>
+                <input type="number" id="maxPriceChange" placeholder="Variation prix max (%)">
+                Variation prix maximum
+            </label>
         </div>
         <button id="applyFilters">Appliquer les filtres</button>
     </div>
@@ -112,8 +127,12 @@
         <div class="score-weights" id="weightsPanel" style="display: none;">
             <div class="weight-options">
                 <label>
-                    Variation prix
-                    <input type="number" id="priceChangeWeight" value="0.15" step="0.05" min="0" max="1">
+                    Variation Volume 24h
+                    <input type="number" id="volumeChangeWeight" value="0.10" step="0.05" min="0" max="1">
+                </label>
+                <label>
+                    Variation Prix 24h
+                    <input type="number" id="priceChangeWeight" value="0.10" step="0.05" min="0" max="1">
                 </label>
                 <label>
                     Volume
@@ -152,7 +171,8 @@
                 <label><input type="checkbox" data-column="liquidity" checked> Liquidité</label>
                 <label><input type="checkbox" data-column="v24hUSD" checked> Volume 24h</label>
                 <label><input type="checkbox" data-column="mc" checked> Market Cap</label>
-                <label><input type="checkbox" data-column="v24hChangePercent" checked> Variation Prix</label>
+                <label><input type="checkbox" data-column="v24hChangePercent" checked> Variation Volume 24h</label>
+                <label><input type="checkbox" data-column="price_change_24h" checked> Variation Prix 24h</label>
                 <label><input type="checkbox" data-column="volume_liquidity_ratio" checked> Vol/Liq</label>
                 <label><input type="checkbox" data-column="volume_mc_ratio" checked> Vol/MC</label>
                 <label><input type="checkbox" data-column="liquidity_mc_ratio" checked> Liq/MC</label>
@@ -197,6 +217,10 @@
                     <th><a href="#" data-column="v24hUSD" onclick="sortTable('v24hUSD'); return false;">Vol. 24h ($)</a></th>
                     <th><a href="#" data-column="mc" onclick="sortTable('mc'); return false;">MCap ($)</a></th>
                     <th><a href="#" data-column="v24hChangePercent" onclick="sortTable('v24hChangePercent'); return false;" class="tooltip">
+                        Δ Volume (%)
+                        <span class="tooltiptext">Variation du volume sur 24h</span>
+                    </a></th>
+                    <th><a href="#" data-column="price_change_24h" onclick="sortTable('price_change_24h'); return false;" class="tooltip">
                         Δ Prix (%)
                         <span class="tooltiptext">Variation du prix sur 24h</span>
                     </a></th>
@@ -256,6 +280,9 @@
                     <td>{{ "{:,.0f}".format(token.mc).replace(',', ' ') }}</td>
                     <td class="{{ 'positive' if token.v24hChangePercent > 0 else 'negative' }} {{ 'suspicious' if token.v24hChangePercent > 100 or token.v24hChangePercent < -50 }}">
                         {{ "{:+.2f}%".format(token.v24hChangePercent) }}
+                    </td>
+                    <td class="{{ 'positive' if token.price_change_24h > 0 else 'negative' }} {{ 'suspicious' if token.price_change_24h > 100 or token.price_change_24h < -50 }}">
+                        {{ "{:+.2f}%".format(token.price_change_24h) }}
                     </td>
                     <td class="{{ 'suspicious' if token.volume_liquidity_ratio > 5 }}">
                         {{ "{:.2f}".format(token.volume_liquidity_ratio) }}

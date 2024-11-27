@@ -31,7 +31,9 @@ def process_token_list(token_list, score_weights=None):
     # Filtrage des tokens exclus
     df = df[~df['symbol'].isin(excluded_symbols)]
     logger.info(f"Tokens après filtrage symboles exclus: {len(df)}")
+
     
+
     # Conversion des colonnes numériques
     numeric_columns = ['v24hUSD', 'liquidity', 'mc', 'v24hChangePercent']
     for col in numeric_columns:
@@ -44,22 +46,37 @@ def process_token_list(token_list, score_weights=None):
     
     # Coefficients par défaut pour le score
     default_weights = {
-        'price_change': 0.15,
+        'volume_change': 0.10,    # Renommé de 'price_change'
+        'price_change': 0.10,     # Nouveau coefficient
         'volume': 0.15,
         'liquidity': 0.15,
-        'vol_liq_ratio': 0.20,
-        'vol_mc_ratio': 0.20,
-        'liq_mc_ratio': 0.15,
-        'holders': 0.10,
-        'unique_wallets': 0.10
+        'vol_liq_ratio': 0.15,
+        'vol_mc_ratio': 0.15,
+        'liq_mc_ratio': 0.10,
+        'holders': 0.05,
+        'unique_wallets': 0.05
     }
     
     # Utiliser les coefficients fournis ou les valeurs par défaut
     weights = default_weights if score_weights is None else {**default_weights, **score_weights}
     
+
+    try:
+        # Conversion des données d'overview avec gestion des erreurs
+        df['holders'] = pd.to_numeric(df['holder_count'], errors='coerce').fillna(0)
+        df['unique_wallets_24h'] = pd.to_numeric(df['unique_wallet_24h'], errors='coerce').fillna(0)
+        df['wallet_change'] = pd.to_numeric(df['unique_wallet_change'], errors='coerce').fillna(0)
+        df['price_change_24h'] = pd.to_numeric(df['priceChange24hPercent'], errors='coerce').fillna(0)
+    except KeyError as e:
+        logger.warning(f"Colonnes manquantes pour les données d'overview: {e}")
+        df['holders'] = 0
+        df['unique_wallets_24h'] = 0
+        df['wallet_change'] = 0
+        df['price_change_24h'] = 0
     # Normalisation des métriques pour le score
     normalized_metrics = {
-        'price_change': normalize_series(df['v24hChangePercent']),
+        'volume_change': normalize_series(df['v24hChangePercent']),
+        'price_change': normalize_series(df['price_change_24h']),
         'volume': normalize_series(df['v24hUSD']),
         'liquidity': normalize_series(df['liquidity']),
         'vol_liq_ratio': normalize_series(df['volume_liquidity_ratio']),
@@ -67,17 +84,7 @@ def process_token_list(token_list, score_weights=None):
         'liq_mc_ratio': normalize_series(df['liquidity_mc_ratio'])
     }
     
-    try:
-        # Conversion des données d'overview avec gestion des erreurs
-        df['holders'] = pd.to_numeric(df['holder_count'], errors='coerce').fillna(0)
-        df['unique_wallets_24h'] = pd.to_numeric(df['unique_wallet_24h'], errors='coerce').fillna(0)
-        df['wallet_change'] = pd.to_numeric(df['unique_wallet_change'], errors='coerce').fillna(0)
-    except KeyError as e:
-        logger.warning(f"Colonnes manquantes pour les données d'overview: {e}")
-        # Création des colonnes manquantes avec des valeurs par défaut
-        df['holders'] = 0
-        df['unique_wallets_24h'] = 0
-        df['wallet_change'] = 0
+    
 
     # Mise à jour des métriques normalisées seulement si les données sont disponibles
     if df['holders'].sum() > 0 or df['unique_wallets_24h'].sum() > 0:
@@ -102,8 +109,10 @@ def process_token_list(token_list, score_weights=None):
         (df['volume_liquidity_ratio'] > 5) |    # Volume/Liq anormal
         (df['volume_mc_ratio'] > 3) |           # Volume/MC anormal
         (df['liquidity_mc_ratio'] < 0.05) |     # Liquidité/MC faible
-        (df['v24hChangePercent'] > 100) |       # Pump > 100%
-        (df['v24hChangePercent'] < -50)         # Dump > 50%
+        (df['v24hChangePercent'] > 10000) |       # Volume pump > 100%
+        (df['v24hChangePercent'] < -50) |       # Volume dump > 50%
+        (df['price_change_24h'] > 10000) |        # Prix pump > 100%
+        (df['price_change_24h'] < -50)          # Prix dump > 50%
     )
     
     df['less_than_24h'] = (df['v24hChangePercent'] == 0.00)

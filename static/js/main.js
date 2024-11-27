@@ -97,15 +97,16 @@ document.addEventListener('DOMContentLoaded', function() {
             'v24hUSD': 4,
             'mc': 5,
             'v24hChangePercent': 6,
-            'volume_liquidity_ratio': 7,
-            'volume_mc_ratio': 8,
-            'liquidity_mc_ratio': 9,
-            'performance': 10,
-            'is_pump': 11,
-            'bubblemaps': 12,
-            'holders': 13,         
-            'unique_wallets_24h': 14,
-            'wallet_change': 15
+            'price_change_24h': 7,
+            'volume_liquidity_ratio': 8,
+            'volume_mc_ratio': 9,
+            'liquidity_mc_ratio': 10,
+            'performance': 11,
+            'is_pump': 12,
+            'bubblemaps': 13,
+            'holders': 14,
+            'unique_wallets_24h': 15,
+            'wallet_change': 16
         };
         return columnMap[column];
     }
@@ -185,7 +186,11 @@ document.addEventListener('DOMContentLoaded', function() {
             suspicious: document.getElementById('filterSuspicious').checked,
             hide24h: document.getElementById('filter24h').checked,
             minHolders: parseNumericValue(document.getElementById('minHolders').value),
-            minWallets24h: parseNumericValue(document.getElementById('minWallets24h').value)
+            minWallets24h: parseNumericValue(document.getElementById('minWallets24h').value),
+            volumeChangeMin: parseNumericValue(document.getElementById('minVolumeChange').value),
+            volumeChangeMax: parseNumericValue(document.getElementById('maxVolumeChange').value),
+            priceChangeMin: parseNumericValue(document.getElementById('minPriceChange').value),
+            priceChangeMax: parseNumericValue(document.getElementById('maxPriceChange').value)
         };
         
         let visibleCount = 0;
@@ -195,7 +200,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 liquidity: parseNumericValue(row.cells[3].textContent),
                 volume: parseNumericValue(row.cells[4].textContent),
                 mcap: parseNumericValue(row.cells[5].textContent),
-                priceChange: parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, '')),
+                volumeChange: parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, '')),
+                priceChange: parseFloat(row.cells[7].textContent.replace(/[^0-9.-]+/g, '')),
                 isSuspicious: row.querySelector('.suspicious') !== null,
                 isLessThan24h: parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, '')) === 0.00,
                 holders: parseNumericValue(row.cells[getColumnIndex('holders')].textContent),
@@ -213,7 +219,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (filters.hide24h && values.isLessThan24h) visible = false;
             if (filters.minHolders && values.holders < filters.minHolders) visible = false;
             if (filters.minWallets24h && values.wallets24h < filters.minWallets24h) visible = false;
-            
+            if (filters.volumeChangeMin && values.volumeChange < filters.volumeChangeMin) visible = false;
+            if (filters.volumeChangeMax && values.volumeChange > filters.volumeChangeMax) visible = false;
+            if (filters.priceChangeMin && values.priceChange < filters.priceChangeMin) visible = false;
+            if (filters.priceChangeMax && values.priceChange > filters.priceChangeMax) visible = false;
+        
             row.style.display = visible ? '' : 'none';
             if (visible) visibleCount++;
         });
@@ -259,6 +269,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function updateSuspiciousHighlight() {
+        const volumeChangeMin = parseFloat(document.getElementById('volumeChangeMin').value);
+        const volumeChangeMax = parseFloat(document.getElementById('volumeChangeMax').value);
         const priceChangeMin = parseFloat(document.getElementById('priceChangeMin').value);
         const priceChangeMax = parseFloat(document.getElementById('priceChangeMax').value);
         const volLiqThreshold = parseFloat(document.getElementById('volLiqThreshold').value);
@@ -269,24 +281,28 @@ document.addEventListener('DOMContentLoaded', function() {
     
         const rows = document.querySelectorAll('tbody tr');
         rows.forEach(row => {
-            const priceChange = parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, ''));
-            const volLiqRatio = parseFloat(row.cells[7].textContent);
-            const volMcRatio = parseFloat(row.cells[8].textContent);
-            const liqMcRatio = parseFloat(row.cells[9].textContent);
+            const volumeChange = parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, ''));
+            const priceChange = parseFloat(row.cells[7].textContent.replace(/[^0-9.-]+/g, '')); // Nouvelle cellule
+            const volLiqRatio = parseFloat(row.cells[8].textContent);
+            const volMcRatio = parseFloat(row.cells[9].textContent);
+            const liqMcRatio = parseFloat(row.cells[10].textContent);
             const wallets24h = parseNumericValue(row.cells[getColumnIndex('unique_wallets_24h')].textContent);
             const holders = parseNumericValue(row.cells[getColumnIndex('holders')].textContent);
     
             // Mise à jour des classes suspicious
-            row.cells[6].classList.toggle('suspicious', priceChange < priceChangeMin || priceChange > priceChangeMax);
-            row.cells[7].classList.toggle('suspicious', volLiqRatio > volLiqThreshold);
-            row.cells[8].classList.toggle('suspicious', volMcRatio > volMcThreshold);
-            row.cells[9].classList.toggle('suspicious', liqMcRatio < liqMcThreshold);
-            row.cells[getColumnIndex('unique_wallets_24h')].classList.toggle('suspicious', wallets24h < wallets24hThreshold); // Inversé
-            row.cells[getColumnIndex('holders')].classList.toggle('suspicious', holders < holdersThreshold); // Inversé
+            row.cells[6].classList.toggle('suspicious', volumeChange < volumeChangeMin || volumeChange > volumeChangeMax);
+            row.cells[7].classList.toggle('suspicious', priceChange < priceChangeMin || priceChange > priceChangeMax);
+            row.cells[8].classList.toggle('suspicious', volLiqRatio > volLiqThreshold);
+            row.cells[9].classList.toggle('suspicious', volMcRatio > volMcThreshold);
+            row.cells[10].classList.toggle('suspicious', liqMcRatio < liqMcThreshold);
+            row.cells[getColumnIndex('unique_wallets_24h')].classList.toggle('suspicious', wallets24h < wallets24hThreshold);
+            row.cells[getColumnIndex('holders')].classList.toggle('suspicious', holders < holdersThreshold);
         });
     
         // Sauvegarder les seuils
         const thresholds = {
+            volumeChangeMin: document.getElementById('volumeChangeMin').value,
+            volumeChangeMax: document.getElementById('volumeChangeMax').value,
             priceChangeMin: document.getElementById('priceChangeMin').value,
             priceChangeMax: document.getElementById('priceChangeMax').value,
             volLiqThreshold: document.getElementById('volLiqThreshold').value,

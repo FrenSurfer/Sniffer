@@ -101,10 +101,13 @@ class BirdeyeAPIClient:
         response = retry_request(request_func)
         if response and response.get('success'):
             data = response.get('data', {})
+            logger.info(f"Données overview reçues pour {address}: {data}")  # AJOUTE CE LOG
+       
             return {
                 'holder_count': data.get('holder', 0),
                 'unique_wallet_24h': data.get('uniqueWallet24h', 0),
-                'unique_wallet_change': data.get('uniqueWallet24hChangePercent', 0)
+                'unique_wallet_change': data.get('uniqueWallet24hChangePercent', 0),
+                'priceChange24hPercent': data.get('priceChange24hPercent', 0)  # Ajout de la variation de prix
             }
         return None
 
