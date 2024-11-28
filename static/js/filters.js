@@ -69,7 +69,9 @@ class FilterManager {
             mcap: this.parseNumericValue(row.cells[5].textContent),
             volumeChange: parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, '')),
             priceChange: parseFloat(row.cells[7].textContent.replace(/[^0-9.-]+/g, '')),
-            isSuspicious: row.querySelector('.suspicious') !== null,
+            isSuspicious: [6, 7, 8, 9, 10, 12, 13].some(index => 
+                row.cells[index].classList.contains('suspicious')
+            ),
             isLessThan24h: parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, '')) === 0,
             holders: this.parseNumericValue(row.cells[12].textContent),
             wallets24h: this.parseNumericValue(row.cells[13].textContent)
