@@ -121,22 +121,22 @@ class ComparisonManager {
 
     generateMetricRows(tokens) {
         const metrics = [
-            ['liquidity', 'Liquidité ($)', t => t.liquidity.toLocaleString()],
-            ['volume', 'Volume 24h ($)', t => t.v24hUSD.toLocaleString()],
-            ['mcap', 'Market Cap ($)', t => t.mc.toLocaleString()],
-            ['price', 'Variation Prix (%)', t => `<td class="${t.v24hChangePercent > 0 ? 'positive' : 'negative'}">${t.v24hChangePercent.toFixed(2)}%</td>`],
-            ['vol-liq', 'Vol/Liq Ratio', t => t.volume_liquidity_ratio.toFixed(2)],
-            ['vol-mc', 'Vol/MC Ratio', t => t.volume_mc_ratio.toFixed(2)],
-            ['liq-mc', 'Liq/MC Ratio', t => t.liquidity_mc_ratio.toFixed(2)],
-            ['score', 'Score', t => t.performance.toFixed(2)],
-            ['holders', 'Holders', t => t.holders.toLocaleString()],
-            ['wallets', 'Wallets 24h', t => t.unique_wallets_24h.toLocaleString()],
+            ['liquidity', 'Liquidité ($)', t => `<td>${t.liquidity.toLocaleString()}</td>`],
+            ['volume', 'Volume 24h ($)', t => `<td>${t.v24hUSD.toLocaleString()}</td>`],
+            ['mcap', 'Market Cap ($)', t => `<td>${t.mc.toLocaleString()}</td>`],
+            ['price', 'Variation Prix (%)', t => `<td class="${t.price_change_24h > 0 ? 'positive' : 'negative'}">${t.price_change_24h.toFixed(2)}%</td>`],
+            ['vol-liq', 'Vol/Liq Ratio', t => `<td>${t.volume_liquidity_ratio.toFixed(2)}</td>`],
+            ['vol-mc', 'Vol/MC Ratio', t => `<td>${t.volume_mc_ratio.toFixed(2)}</td>`],
+            ['liq-mc', 'Liq/MC Ratio', t => `<td>${t.liquidity_mc_ratio.toFixed(2)}</td>`],
+            ['score', 'Score', t => `<td class="${t.performance > 0 ? 'positive' : 'negative'}">${t.performance.toFixed(2)}</td>`],
+            ['holders', 'Holders', t => `<td>${t.holders.toLocaleString()}</td>`],
+            ['wallets', 'Wallets 24h', t => `<td>${t.unique_wallets_24h.toLocaleString()}</td>`],
             ['wallet-change', 'Δ Wallets (%)', t => `<td class="${t.wallet_change > 0 ? 'positive' : 'negative'}">${t.wallet_change.toFixed(2)}%</td>`]
         ];
-
+    
         return metrics.map(([metric, label, formatter]) => `
             <tr class="metric-row" data-metric="${metric}">
-                <td>${label}</td>
+                <td class="metric-label">${label}</td>
                 ${tokens.map(t => formatter(t)).join('')}
             </tr>
         `).join('');

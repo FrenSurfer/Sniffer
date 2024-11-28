@@ -469,3 +469,31 @@ th {
 .clear-search:hover {
     color: #e0e0e0;
 }
+
+.modal .metric-label {
+    font-weight: bold;
+    text-align: left;
+    padding-right: 15px;
+}
+
+.modal table td {
+    padding: 8px;
+    text-align: right;
+}
+
+.modal table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.modal .metric-row:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.modal td.positive {
+    color: #28a745;
+}
+
+.modal td.negative {
+    color: #dc3545;
+}
