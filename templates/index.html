@@ -112,6 +112,14 @@
                 <input type="number" id="maxPriceChange" placeholder="Variation prix max (%)">
                 Variation prix maximum
             </label>
+            <label>
+                <input type="number" id="minVolumeChange" placeholder="Variation volume min (%)">
+                Variation volume minimum
+            </label>
+            <label>
+                <input type="number" id="maxVolumeChange" placeholder="Variation volume max (%)">
+                Variation volume maximum
+            </label>
         </div>
         <button id="applyFilters">Appliquer les filtres</button>
     </div>
@@ -329,6 +337,12 @@
     </div>
 
     <!-- Script -->
+    <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/search.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/columnVisibility.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/filters.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/comparison.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/sorting.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
         function refreshCache() {
