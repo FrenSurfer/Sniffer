@@ -17,11 +17,12 @@ class ColumnVisibilityManager {
             { id: 'volume_mc_ratio', label: 'Vol/MC', index: 10 },
             { id: 'liquidity_mc_ratio', label: 'Liq/MC', index: 11 },
             { id: 'performance', label: 'Score', index: 12 },
-            { id: 'is_pump', label: 'Pump', index: 13 },
-            { id: 'bubblemaps', label: 'Bubblemaps', index: 14 },
-            { id: 'holders', label: 'Holders', index: 15 },
-            { id: 'unique_wallets_24h', label: 'Wallets 24h', index: 16 },
-            { id: 'wallet_change', label: 'Δ Wallets', index: 17 }
+            
+            { id: 'holders', label: 'Holders', index: 13 },
+            { id: 'unique_wallets_24h', label: 'Wallets 24h', index: 14 },
+            { id: 'wallet_change', label: 'Δ Wallets', index: 15 },
+            { id: 'is_pump', label: 'Pump', index: 16 },
+            { id: 'bubblemaps', label: 'Bubblemaps', index: 17 },
         ];
 
         this.initializePanel();

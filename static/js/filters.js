@@ -71,8 +71,8 @@ class FilterManager {
             priceChange: parseFloat(row.cells[7].textContent.replace(/[^0-9.-]+/g, '')),
             isSuspicious: row.querySelector('.suspicious') !== null,
             isLessThan24h: parseFloat(row.cells[6].textContent.replace(/[^0-9.-]+/g, '')) === 0,
-            holders: this.parseNumericValue(row.cells[14].textContent),
-            wallets24h: this.parseNumericValue(row.cells[15].textContent)
+            holders: this.parseNumericValue(row.cells[12].textContent),
+            wallets24h: this.parseNumericValue(row.cells[13].textContent)
         };
     }
 
@@ -215,8 +215,8 @@ class FilterManager {
             volLiqRatio: parseFloat(row.cells[8].textContent),
             volMcRatio: parseFloat(row.cells[9].textContent),
             liqMcRatio: parseFloat(row.cells[10].textContent),
-            wallets24h: this.parseNumericValue(row.cells[15].textContent),
-            holders: this.parseNumericValue(row.cells[14].textContent)
+            wallets24h: this.parseNumericValue(row.cells[13].textContent),
+            holders: this.parseNumericValue(row.cells[12].textContent)
         };
 
         row.cells[6].classList.toggle('suspicious', 
@@ -230,8 +230,8 @@ class FilterManager {
         row.cells[8].classList.toggle('suspicious', cells.volLiqRatio > thresholds.volLiqThreshold);
         row.cells[9].classList.toggle('suspicious', cells.volMcRatio > thresholds.volMcThreshold);
         row.cells[10].classList.toggle('suspicious', cells.liqMcRatio < thresholds.liqMcThreshold);
-        row.cells[15].classList.toggle('suspicious', cells.wallets24h < thresholds.wallets24hThreshold);
-        row.cells[14].classList.toggle('suspicious', cells.holders < thresholds.holdersThreshold);
+        row.cells[13].classList.toggle('suspicious', cells.wallets24h < thresholds.wallets24hThreshold);
+        row.cells[12].classList.toggle('suspicious', cells.holders < thresholds.holdersThreshold);
     }
 
     saveThresholds(thresholds) {

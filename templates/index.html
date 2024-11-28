@@ -185,8 +185,6 @@
                 <label><input type="checkbox" data-column="volume_mc_ratio" checked> Vol/MC</label>
                 <label><input type="checkbox" data-column="liquidity_mc_ratio" checked> Liq/MC</label>
                 <label><input type="checkbox" data-column="performance" checked> Score</label>
-                <label><input type="checkbox" data-column="is_pump" > Pump</label>
-                <label><input type="checkbox" data-column="bubblemaps" > Bubblemaps</label>
                 <label>
                     <input type="checkbox" data-column="holders" checked>
                     Holders
@@ -199,6 +197,9 @@
                     <input type="checkbox" data-column="wallet_change" checked>
                     Δ Wallets
                 </label>
+                <label><input type="checkbox" data-column="is_pump" > Pump</label>
+                <label><input type="checkbox" data-column="bubblemaps" > Bubblemaps</label>
+                
             </div>
         </div>
     </div>
@@ -249,14 +250,6 @@
                         <span class="tooltiptext">Score combiné basé sur les ratios</span>
                     </a></th>
 
-                    <th><a href="#" data-column="is_pump" onclick="sortTable('is_pump'); return false;" class="tooltip">
-                        Pump
-                        <span class="tooltiptext">Token avec adresse finissant par 'pump'</span>
-                    </a></th>
-                    <th><a href="#" data-column="bubblemaps" class="tooltip">
-                        Bubblemaps
-                        <span class="tooltiptext">Voir sur Bubblemaps</span>
-                    </a></th>
                     <th>
                         <a href="#" data-column="holders" onclick="sortTable('holders'); return false;" class="tooltip">
                             Holders
@@ -273,6 +266,18 @@
                         <a href="#" data-column="wallet_change" onclick="sortTable('wallet_change'); return false;" class="tooltip">
                             Δ Wallets (%)
                             <span class="tooltiptext">Évolution des wallets uniques</span>
+                        </a>
+                    </th>
+                    <th>
+                        <a href="#" data-column="is_pump" onclick="sortTable('is_pump'); return false;" class="tooltip">
+                            Pump
+                            <span class="tooltiptext">Token avec adresse finissant par 'pump'</span>
+                        </a>
+                    </th>
+                    <th>
+                        <a href="#" data-column="bubblemaps" class="tooltip">
+                            Bubblemaps
+                            <span class="tooltiptext">Voir sur Bubblemaps</span>
                         </a>
                     </th>
                 </tr>
@@ -304,6 +309,11 @@
                     <td class="{{ 'positive' if token.performance > 0 else 'negative' }}">
                         {{ "{:+.2f}".format(token.performance) }}
                     </td>
+                    <td>{{ "{:,.0f}".format(token.holders|float) }}</td>
+                    <td>{{ "{:,.0f}".format(token.unique_wallets_24h|float) }}</td>
+                    <td class="{{ 'positive' if token.wallet_change > 0 else 'negative' }}">
+                        {{ "{:+.2f}%".format(token.wallet_change|float) }}
+                    </td>
                     <td style="text-align: center;">{{ "✓" if token.is_pump else "" }}</td>
                     <td style="text-align: center;">
                         <a href="https://app.bubblemaps.io/sol/token/{{ token.address }}" 
@@ -312,11 +322,6 @@
                            title="Voir sur Bubblemaps">
                             🔍
                         </a>
-                    </td>
-                    <td>{{ "{:,.0f}".format(token.holders|float) }}</td>
-                    <td>{{ "{:,.0f}".format(token.unique_wallets_24h|float) }}</td>
-                    <td class="{{ 'positive' if token.wallet_change > 0 else 'negative' }}">
-                        {{ "{:+.2f}%".format(token.wallet_change|float) }}
                     </td>
                 </tr>
                 {% endfor %}

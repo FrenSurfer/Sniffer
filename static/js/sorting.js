@@ -13,11 +13,11 @@ class SortManager {
             'volume_mc_ratio': 9,
             'liquidity_mc_ratio': 10,
             'performance': 11,
-            'is_pump': 12,
-            'bubblemaps': 13,
-            'holders': 14,
-            'unique_wallets_24h': 15,
-            'wallet_change': 16
+            'holders': 12,
+            'unique_wallets_24h': 13,
+            'wallet_change': 14,
+            'is_pump': 15,     
+            'bubblemaps': 16      
         };
 
         this.initializeSorting();
@@ -60,13 +60,25 @@ class SortManager {
         let aValue = rowA.cells[this.getColumnIndex(column)].textContent.trim();
         let bValue = rowB.cells[this.getColumnIndex(column)].textContent.trim();
         
-        // Conversion des valeurs selon le type de colonne
+        // Pour les colonnes de pourcentage (delta prix, volume, wallets)
+        if (column === 'v24hChangePercent' || column === 'price_change_24h' || column === 'wallet_change') {
+            const aNum = parseFloat(aValue.replace(/[%+]/g, ''));
+            const bNum = parseFloat(bValue.replace(/[%+]/g, ''));
+            
+            // Ordre croissant : négatifs -> zéro -> positifs
+            if (order === 'asc') {
+                return aNum - bNum;
+            }
+            // Ordre décroissant : positifs -> zéro -> négatifs
+            return bNum - aNum;
+        }
+        
+        // Pour les autres types de colonnes, utiliser convertValues
         [aValue, bValue] = this.convertValues(aValue, bValue, column);
         
-        // Comparaison
         return order === 'asc' ? 
-            (aValue > bValue ? 1 : -1) : 
-            (aValue < bValue ? 1 : -1);
+            (aValue > bValue ? 1 : aValue < bValue ? -1 : 0) : 
+            (aValue < bValue ? 1 : aValue > bValue ? -1 : 0);
     }
 
     convertValues(aValue, bValue, column) {
@@ -76,13 +88,15 @@ class SortManager {
                 parseFloat(bValue.replace(/[^\d.-]/g, ''))
             ];
         } else if (this.isPercentageColumn(column)) {
-            // Pour les colonnes de pourcentage, on traite 0.00% comme la plus petite valeur
             const aNum = parseFloat(aValue.replace(/[%+]/g, ''));
             const bNum = parseFloat(bValue.replace(/[%+]/g, ''));
             
-            // Si l'une des valeurs est 0.00%, on la traite différemment
-            if (aNum === 0) return [-Infinity, bNum];
-            if (bNum === 0) return [aNum, -Infinity];
+            // Traitement spécial pour les colonnes de variation de prix et volume
+            if (column === 'v24hChangePercent' || column === 'price_change_24h' || column === 'wallet_change') {
+                // Pour le tri croissant : négatifs -> 0 -> positifs
+                if (aNum === 0) return [0, bNum < 0 ? 1 : bNum];
+                if (bNum === 0) return [aNum < 0 ? -1 : aNum, 0];
+            }
             return [aNum, bNum];
         } else if (column === 'is_pump') {
             return [
@@ -98,10 +112,9 @@ class SortManager {
     }
 
     isPercentageColumn(column) {
-        return column === 'v24hChangePercent' || 
+        return ['v24hChangePercent', 'price_change_24h', 'wallet_change'].includes(column) || 
                column.includes('ratio') || 
-               column === 'performance' || 
-               column === 'wallet_change';
+               column === 'performance';
     }
 
     getColumnIndex(column) {
