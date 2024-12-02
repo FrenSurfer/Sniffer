@@ -68,6 +68,36 @@ def index():
 						 sort_options=SORT_OPTIONS)
 
 
+@app.route('/traders')
+def traders_view():
+    """Affiche la page des traders sans données"""
+    return render_template('traders.html', traders=None)
+
+@app.route('/api/traders')
+def get_traders_data():
+    """API endpoint pour récupérer les données des traders"""
+    sort_by = request.args.get('sort_by', 'PnL')
+    sort_type = request.args.get('sort_type', 'desc')
+    time_range = request.args.get('type', '1W')
+    
+    try:
+        traders_data = client.get_traders_data(
+            sort_by=sort_by,
+            sort_type=sort_type,
+            time_range=time_range,
+            total_desired=100  # Nombre total de traders souhaité
+        )
+        return jsonify({
+            'success': True,
+            'data': traders_data
+        })
+    except Exception as e:
+        logger.error(f"Erreur lors de la récupération des traders: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        })
+
 @app.route('/refresh-cache')
 def refresh_cache():
     try:
