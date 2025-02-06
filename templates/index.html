@@ -180,7 +180,7 @@
                 <label><input type="checkbox" data-column="symbol" checked> Symbole</label>
                 <label><input type="checkbox" data-column="name" checked> Nom</label>
                 <label><input type="checkbox" data-column="liquidity" checked> Liquidité</label>
-                <label><input type="checkbox" data-column="v24hUSD" checked> Volume 24h</label>
+                <label><input type="checkbox" data-column="volume" checked> Volume 24h</label>
                 <label><input type="checkbox" data-column="mc" checked> Market Cap</label>
                 <label><input type="checkbox" data-column="v24hChangePercent" checked> Variation Volume 24h</label>
                 <label><input type="checkbox" data-column="price_change_24h" checked> Variation Prix 24h</label>
@@ -188,21 +188,8 @@
                 <label><input type="checkbox" data-column="volume_mc_ratio" checked> Vol/MC</label>
                 <label><input type="checkbox" data-column="liquidity_mc_ratio" checked> Liq/MC</label>
                 <label><input type="checkbox" data-column="performance" checked> Score</label>
-                <label>
-                    <input type="checkbox" data-column="holders" checked>
-                    Holders
-                </label>
-                <label>
-                    <input type="checkbox" data-column="unique_wallets_24h" checked>
-                    Wallets 24h
-                </label>
-                <label>
-                    <input type="checkbox" data-column="wallet_change" checked>
-                    Δ Wallets
-                </label>
-                <label><input type="checkbox" data-column="is_pump" > Pump</label>
-                <label><input type="checkbox" data-column="bubblemaps" > Bubblemaps</label>
-                
+                <label><input type="checkbox" data-column="is_pump"> Pump</label>
+                <label><input type="checkbox" data-column="bubblemaps"> Bubblemaps</label>
             </div>
         </div>
     </div>
@@ -226,7 +213,7 @@
                     <th><a href="#" data-column="symbol" onclick="sortTable('symbol'); return false;">Symbole</a></th>
                     <th><a href="#" data-column="name" onclick="sortTable('name'); return false;">Nom</a></th>
                     <th><a href="#" data-column="liquidity" onclick="sortTable('liquidity'); return false;">Liq. ($)</a></th>
-                    <th><a href="#" data-column="v24hUSD" onclick="sortTable('v24hUSD'); return false;">Vol. 24h ($)</a></th>
+                    <th><a href="#" data-column="volume" onclick="sortTable('volume'); return false;">Vol. 24h ($)</a></th>
                     <th><a href="#" data-column="mc" onclick="sortTable('mc'); return false;">MCap ($)</a></th>
                     <th><a href="#" data-column="v24hChangePercent" onclick="sortTable('v24hChangePercent'); return false;" class="tooltip">
                         Δ Volume (%)
@@ -252,25 +239,6 @@
                         Score
                         <span class="tooltiptext">Score combiné basé sur les ratios</span>
                     </a></th>
-
-                    <th>
-                        <a href="#" data-column="holders" onclick="sortTable('holders'); return false;" class="tooltip">
-                            Holders
-                            <span class="tooltiptext">Nombre total de détenteurs</span>
-                        </a>
-                    </th>
-                    <th>
-                        <a href="#" data-column="unique_wallets_24h" onclick="sortTable('unique_wallets_24h'); return false;" class="tooltip">
-                            Wallets 24h
-                            <span class="tooltiptext">Wallets uniques ayant tradé en 24h</span>
-                        </a>
-                    </th>
-                    <th>
-                        <a href="#" data-column="wallet_change" onclick="sortTable('wallet_change'); return false;" class="tooltip">
-                            Δ Wallets (%)
-                            <span class="tooltiptext">Évolution des wallets uniques</span>
-                        </a>
-                    </th>
                     <th>
                         <a href="#" data-column="is_pump" onclick="sortTable('is_pump'); return false;" class="tooltip">
                             Pump
@@ -292,7 +260,7 @@
                     <td style="cursor: pointer;" onclick="copyWithEffect(this, '{{ token.address }}')" title="Click to copy adress">{{ token.symbol }}</td>
                     <td>{{ token.name }}</td>
                     <td>{{ "{:,.0f}".format(token.liquidity).replace(',', ' ') }}</td>
-                    <td>{{ "{:,.0f}".format(token.v24hUSD).replace(',', ' ') }}</td>
+                    <td>{{ "{:,.0f}".format(token.volume).replace(',', ' ') }}</td>
                     <td>{{ "{:,.0f}".format(token.mc).replace(',', ' ') }}</td>
                     <td class="{{ 'positive' if token.v24hChangePercent > 0 else 'negative' }} {{ 'suspicious' if token.v24hChangePercent > 100 or token.v24hChangePercent < -50 }}">
                         {{ "{:+.2f}%".format(token.v24hChangePercent) }}
@@ -311,11 +279,6 @@
                     </td>
                     <td class="{{ 'positive' if token.performance > 0 else 'negative' }}">
                         {{ "{:+.2f}".format(token.performance) }}
-                    </td>
-                    <td>{{ "{:,.0f}".format(token.holders|float) }}</td>
-                    <td>{{ "{:,.0f}".format(token.unique_wallets_24h|float) }}</td>
-                    <td class="{{ 'positive' if token.wallet_change > 0 else 'negative' }}">
-                        {{ "{:+.2f}%".format(token.wallet_change|float) }}
                     </td>
                     <td style="text-align: center;">{{ "✓" if token.is_pump else "" }}</td>
                     <td style="text-align: center;">

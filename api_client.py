@@ -124,7 +124,8 @@ class BirdeyeAPIClient:
                 return cached_data
 
         all_tokens = []
-        batch_size = min(50, self.rate_limit // 2)
+        # Réduire la taille du batch pour respecter la limite de 60 rpm
+        batch_size = 30  # Pour rester dans la limite de 60 rpm
         
         for offset in range(0, total_desired, batch_size):
             logger.info(f"Récupération des tokens {offset} à {offset + batch_size}...")
@@ -139,22 +140,14 @@ class BirdeyeAPIClient:
             if not tokens:
                 break
 
-            # Traitement par batch pour les overviews
-            for token in tokens:
-                logger.info(f"Récupération des holders pour {token['symbol']}")
-                overview_data = self.get_token_overview(token['address'])
-                request_count += 1
-                if overview_data:
-                    token.update(overview_data)
-                time.sleep(self.min_request_interval)
-            
             all_tokens.extend(tokens)
             
             if len(all_tokens) >= total_desired:
                 all_tokens = all_tokens[:total_desired]
                 break
 
-            time.sleep(self.min_request_interval)
+            # Attendre 1 seconde entre chaque requête pour respecter la limite de 60 rpm
+            time.sleep(1)
 
         # Statistiques finales
         end_time = time.time()

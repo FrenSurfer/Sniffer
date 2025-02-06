@@ -4,14 +4,14 @@ from data_processor import process_token_list
 import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 
-# Configuration du logging
-logging.basicConfig(level=logging.INFO)
+# Configuration du logging plus détaillée
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 
 # Configuration
-api_key = "7817826158dc4340acbb4468ab7af7a4"
+api_key = "77e7ad01541f415d99238b246b59294f"
 client = BirdeyeAPIClient(api_key)
 token_data = []
 
@@ -23,49 +23,65 @@ SORT_OPTIONS = {
 }
 
 def fetch_token_data(sort_by='volume', force_refresh=False):
-    logger.info(f"Récupération des données des tokens (tri par {sort_by})...")
+    logger.info(f"Début de fetch_token_data avec sort_by={sort_by}, force_refresh={force_refresh}")
     try:
+        # Récupération des tokens
         tokens = client.get_all_tokens(
             total_desired=500,
-            use_cache=not force_refresh  # Utiliser le cache sauf si force_refresh=True
+            use_cache=not force_refresh
         )
         
         if not tokens:
-            logger.error("Aucun token récupéré")
+            logger.error("Aucun token récupéré de l'API")
             return
         
-        logger.info(f"Nombre total de tokens récupérés: {len(tokens)}")
+        logger.info(f"Tokens bruts récupérés: {len(tokens)}")
         
+        # Traitement des données
         df = process_token_list(tokens)
+        logger.info(f"DataFrame après process_token_list: {len(df)} lignes")
+        
+        # Conversion en dictionnaire
         global token_data
         token_data = df.to_dict('records')
-        logger.info(f"Données mises à jour. {len(token_data)} tokens affichés.")
+        logger.info(f"Données converties en dictionnaire: {len(token_data)} tokens")
+        
+        # Afficher un exemple de token pour debug
+        if token_data:
+            logger.info(f"Exemple de token: {token_data[0]}")
+        
+        # Dans la fonction fetch_token_data, après avoir récupéré les tokens
+        logger.info(f"Premier token brut: {tokens[0] if tokens else 'Aucun token'}")
         
     except Exception as e:
-        logger.error(f"Erreur lors de la récupération des données: {str(e)}")
-        logger.exception(e)
+        logger.exception("Erreur dans fetch_token_data:")
+        raise
 
 @app.route('/')
 def index():
-	sort_by = request.args.get('sort', 'performance')
-	sort_order = request.args.get('order', 'desc')
-	api_sort = request.args.get('api_sort', 'volume')
-	
-	# Si le tri API a changé, rafraîchir les données
-	if api_sort != getattr(app, 'current_api_sort', None):
-		app.current_api_sort = api_sort
-		fetch_token_data(api_sort)
-	
-	sorted_data = sorted(token_data, 
-						key=lambda x: float(x.get(sort_by, 0) or 0),
-						reverse=(sort_order == 'desc'))
-	
-	return render_template('index.html', 
-						 tokens=sorted_data, 
-						 sort_by=sort_by, 
-						 sort_order=sort_order,
-						 api_sort=api_sort,
-						 sort_options=SORT_OPTIONS)
+    logger.info(f"Accès à la route '/' - Nombre de tokens disponibles: {len(token_data)}")
+    sort_by = request.args.get('sort', 'performance')
+    sort_order = request.args.get('order', 'desc')
+    api_sort = request.args.get('api_sort', 'volume')
+    
+    # Si le tri API a changé, rafraîchir les données
+    if api_sort != getattr(app, 'current_api_sort', None):
+        logger.info(f"Changement de tri API: {getattr(app, 'current_api_sort', None)} -> {api_sort}")
+        app.current_api_sort = api_sort
+        fetch_token_data(api_sort)
+    
+    sorted_data = sorted(token_data, 
+                        key=lambda x: float(x.get(sort_by, 0) or 0),
+                        reverse=(sort_order == 'desc'))
+    
+    logger.info(f"Données triées envoyées au template: {len(sorted_data)} tokens")
+    
+    return render_template('index.html', 
+                         tokens=sorted_data, 
+                         sort_by=sort_by, 
+                         sort_order=sort_order,
+                         api_sort=api_sort,
+                         sort_options=SORT_OPTIONS)
 
 
 @app.route('/traders')
@@ -119,18 +135,19 @@ def compare_tokens():
 	return jsonify(compared_tokens)
 
 if __name__ == '__main__':
-	# Initialiser les données une seule fois au démarrage
-	app.current_api_sort = 'volume'
-	fetch_token_data(app.current_api_sort)
-	
-	# Configurer le scheduler pour les mises à jour
-	scheduler = BackgroundScheduler()
-	scheduler.add_job(
-		func=lambda: fetch_token_data(app.current_api_sort), 
-		trigger="interval", 
-		minutes=10
-	)
-	scheduler.start()
-	
-	# Démarrer Flask sans le mode debug
-	app.run(debug=False)
+    # Initialiser les données une seule fois au démarrage
+    logger.info("Démarrage de l'application")
+    app.current_api_sort = 'volume'
+    fetch_token_data(app.current_api_sort)
+    
+    # Configurer le scheduler
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(
+        func=lambda: fetch_token_data(app.current_api_sort), 
+        trigger="interval", 
+        minutes=30
+    )
+    scheduler.start()
+    
+    # Démarrer Flask
+    app.run(debug=False)
