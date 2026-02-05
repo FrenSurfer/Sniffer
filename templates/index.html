@@ -1,336 +1,540 @@
 <!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analyse des Tokens Solana</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
-<body>
-    
-    <nav class="nav-menu">
-        <a href="/" class="nav-link active">Tokens</a>
-        <a href="/traders" class="nav-link">Traders</a>
-    </nav>
-
-
-    <!-- Filtres -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Solana Token Analysis</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/styles.css') }}"
+    />
+  </head>
+  <body>
+    <!-- Top bar: refresh, search, toggles -->
     <div class="controls">
-        <button onclick="refreshCache()" class="refresh-button">
-            Refresh data
+      <button onclick="refreshCache()" class="refresh-button">
+        Refresh data
+      </button>
+      <div class="search-wrap">
+        <input
+          type="text"
+          id="tokenSearch"
+          placeholder="Search token..."
+          class="search-input"
+        />
+        <button
+          type="button"
+          onclick="clearSearch()"
+          class="clear-search"
+          aria-label="Clear"
+        >
+          ✕
         </button>
+      </div>
+      <div class="controls-toggles">
+        <button id="toggleWeights" class="toggle-button toggle-btn-sm">
+          Score weights ▼
+        </button>
+      </div>
+    </div>
 
-        <div class="search-container"></div>
-        <input type="text" 
-               id="tokenSearch" 
-               placeholder="Rechercher un token..." 
-               class="search-input">
-        <button onclick="clearSearch()" class="clear-search">✕</button>
-    </div>
-    </div>
+    <!-- Filters panel: one card with clear sections -->
     <div class="filters-panel">
-        <div class="suspicious-thresholds-container">
-            <button id="toggleThresholds" class="toggle-button">
-                Seuils de détection ▼
-            </button>
-            <div class="suspicious-thresholds" id="thresholdsPanel" style="display: none;">
-                <div class="filter-options">
-                    <label>
-                        Variation volume suspect (%)
-                        <div class="threshold-inputs">
-                            <input type="number" id="volumeChangeMin" placeholder="Min" value="-50">
-                            <input type="number" id="volumeChangeMax" placeholder="Max" value="100">
-                        </div>
-                    </label>
-                    <label>
-                        Variation prix suspect (%)
-                        <div class="threshold-inputs">
-                            <input type="number" id="priceChangeMin" placeholder="Min" value="-50">
-                            <input type="number" id="priceChangeMax" placeholder="Max" value="100">
-                        </div>
-                    </label>
-                    <label>
-                        Ratio Vol/Liq suspect >
-                        <input type="number" id="volLiqThreshold" value="5" step="0.1">
-                    </label>
-                    <label>
-                        Ratio Vol/MC suspect >
-                        <input type="number" id="volMcThreshold" value="3" step="0.1">
-                    </label>
-                    <label>
-                        Ratio Liq/MC suspect <
-                        <input type="number" id="liqMcThreshold" value="0.05" step="0.01">
-                    </label>
-                    <label>
-                        Wallets 24h suspect <
-                        <input type="number" id="wallets24hThreshold" value="100" step="10">
-                    </label>
-                    <label>
-                        Holders suspect <
-                        <input type="number" id="holdersThreshold" value="500" step="50">
-                    </label>
-                </div>
-            </div>
+      <div class="filters-header">
+        <h3 class="filters-title">Filters</h3>
+        <div class="filters-actions">
+          <span id="visibleCount" class="filter-count"
+            >{{ tokens|length }} tokens</span
+          >
+          <button type="button" id="applyFilters" class="btn-apply">
+            Apply
+          </button>
+          <button type="button" id="resetFilters" class="reset-button">
+            Reset
+          </button>
         </div>
-        <h3>Filtres</h3>
-        <div class="filter-options">
-            <label>
-                <input type="checkbox" id="filter24h" checked>
-                Tokens > 24h
-            </label>
-            <label>
-                <input type="checkbox" id="filterSuspicious">
-                Masquer les tokens suspects
-            </label>
-            <label>
-                <input type="number" id="minLiquidity" placeholder="Liquidité min ($)">
-                Liquidité minimum
-            </label>
-            <label>
-                <input type="number" id="minVolume" placeholder="Volume min ($)">
-                Volume minimum
-            </label>
-           
-            <label>
-                <input type="number" id="minMc" placeholder="MCap min ($)">
-                Market Cap minimum
-            </label>
-            <label>
-                <input type="number" id="maxMc" placeholder="MCap max ($)">
-                Market Cap maximum
-            </label>
-            <label>
-                <input type="number" id="minHolders" placeholder="Holders min">
-                Holders minimum
-            </label>
-            <label>
-                <input type="number" id="minWallets24h" placeholder="Wallets 24h min">
-                Wallets 24h minimum
-            </label>
-            <label>
-                <input type="number" id="minPriceChange" placeholder="Variation prix min (%)">
-                Variation prix minimum
-            </label>
-            <label>
-                <input type="number" id="maxPriceChange" placeholder="Variation prix max (%)">
-                Variation prix maximum
-            </label>
-            <label>
-                <input type="number" id="minVolumeChange" placeholder="Variation volume min (%)">
-                Variation volume minimum
-            </label>
-            <label>
-                <input type="number" id="maxVolumeChange" placeholder="Variation volume max (%)">
-                Variation volume maximum
-            </label>
-        </div>
-        <button id="applyFilters">Appliquer les filtres</button>
-    </div>
+      </div>
 
-    <div class="filter-stats">
-        <span id="visibleCount">{{ tokens|length }} tokens affichés</span>
-        <button id="resetFilters" class="reset-button">Réinitialiser les filtres</button>
-    </div>
-    <div class="score-weights-container">
-        <button id="toggleWeights" class="toggle-button">
-            Coefficients du Score ▼
+      <div class="filter-section filter-section-quick">
+        <span class="filter-section-label">Quick</span>
+        <div class="filter-row">
+          <label class="filter-check"
+            ><input type="checkbox" id="filter24h" checked /> Tokens &gt;
+            24h</label
+          >
+          <label class="filter-check"
+            ><input type="checkbox" id="filterSuspicious" /> Hide
+            suspicious</label
+          >
+        </div>
+      </div>
+
+      <div class="filter-section filter-section-minmax">
+        <span class="filter-section-label">Minimums</span>
+        <div class="filter-grid">
+          <label class="filter-field">
+            <span>Liquidity ($)</span>
+            <input type="number" id="minLiquidity" placeholder="—" />
+          </label>
+          <label class="filter-field">
+            <span>Volume ($)</span>
+            <input type="number" id="minVolume" placeholder="—" />
+          </label>
+          <label class="filter-field">
+            <span>Market Cap ($)</span>
+            <input type="number" id="minMc" placeholder="—" />
+          </label>
+          <label class="filter-field">
+            <span>Holders</span>
+            <input type="number" id="minHolders" placeholder="—" />
+          </label>
+          <label class="filter-field">
+            <span>Wallets 24h</span>
+            <input type="number" id="minWallets24h" placeholder="—" />
+          </label>
+          <label class="filter-field">
+            <span>Price change %</span>
+            <input type="number" id="minPriceChange" placeholder="Min" />
+          </label>
+          <label class="filter-field">
+            <span>Volume change %</span>
+            <input type="number" id="minVolumeChange" placeholder="Min" />
+          </label>
+        </div>
+      </div>
+      <div class="filter-section filter-section-minmax">
+        <span class="filter-section-label">Maximums</span>
+        <div class="filter-grid">
+          <label class="filter-field">
+            <span>Market Cap ($)</span>
+            <input type="number" id="maxMc" placeholder="—" />
+          </label>
+          <label class="filter-field">
+            <span>Price change %</span>
+            <input type="number" id="maxPriceChange" placeholder="Max" />
+          </label>
+          <label class="filter-field">
+            <span>Volume change %</span>
+            <input type="number" id="maxVolumeChange" placeholder="Max" />
+          </label>
+        </div>
+      </div>
+
+      <div class="filter-section filter-section-advanced">
+        <button
+          type="button"
+          id="toggleThresholds"
+          class="toggle-button toggle-inline"
+        >
+          Detection thresholds (suspicious highlight) ▼
         </button>
-        <div class="score-weights" id="weightsPanel" style="display: none;">
-            <div class="weight-options">
-                <label>
-                    Variation Volume 24h
-                    <input type="number" id="volumeChangeWeight" value="0.10" step="0.05" min="0" max="1">
-                </label>
-                <label>
-                    Variation Prix 24h
-                    <input type="number" id="priceChangeWeight" value="0.10" step="0.05" min="0" max="1">
-                </label>
-                <label>
-                    Volume
-                    <input type="number" id="volumeWeight" value="0.15" step="0.05" min="0" max="1">
-                </label>
-                <label>
-                    Liquidité
-                    <input type="number" id="liquidityWeight" value="0.15" step="0.05" min="0" max="1">
-                </label>
-                <label>
-                    Ratio Vol/Liq
-                    <input type="number" id="volLiqWeight" value="0.20" step="0.05" min="0" max="1">
-                </label>
-                <label>
-                    Ratio Vol/MC
-                    <input type="number" id="volMcWeight" value="0.20" step="0.05" min="0" max="1">
-                </label>
-                <label>
-                    Ratio Liq/MC
-                    <input type="number" id="liqMcWeight" value="0.15" step="0.05" min="0" max="1">
-                </label>
-            </div>
-            <div class="weight-total">Total: <span id="weightTotal">1.00</span></div>
-            <button id="applyWeights">Appliquer les coefficients</button>
+        <div
+          class="suspicious-thresholds"
+          id="thresholdsPanel"
+          style="display: none"
+        >
+          <div class="threshold-grid">
+            <label class="filter-field">
+              <span>Volume change %</span>
+              <div class="threshold-inputs">
+                <input
+                  type="number"
+                  id="volumeChangeMin"
+                  placeholder="Min"
+                  value="-50"
+                />
+                <input
+                  type="number"
+                  id="volumeChangeMax"
+                  placeholder="Max"
+                  value="100"
+                />
+              </div>
+            </label>
+            <label class="filter-field">
+              <span>Price change %</span>
+              <div class="threshold-inputs">
+                <input
+                  type="number"
+                  id="priceChangeMin"
+                  placeholder="Min"
+                  value="-50"
+                />
+                <input
+                  type="number"
+                  id="priceChangeMax"
+                  placeholder="Max"
+                  value="100"
+                />
+              </div>
+            </label>
+            <label class="filter-field">
+              <span>Vol/Liq &gt;</span>
+              <input type="number" id="volLiqThreshold" value="5" step="0.1" />
+            </label>
+            <label class="filter-field">
+              <span>Vol/MC &gt;</span>
+              <input type="number" id="volMcThreshold" value="3" step="0.1" />
+            </label>
+            <label class="filter-field">
+              <span>Liq/MC &lt;</span>
+              <input
+                type="number"
+                id="liqMcThreshold"
+                value="0.05"
+                step="0.01"
+              />
+            </label>
+            <label class="filter-field">
+              <span>Wallets 24h &lt;</span>
+              <input
+                type="number"
+                id="wallets24hThreshold"
+                value="100"
+                step="10"
+              />
+            </label>
+            <label class="filter-field">
+              <span>Holders &lt;</span>
+              <input
+                type="number"
+                id="holdersThreshold"
+                value="500"
+                step="50"
+              />
+            </label>
+          </div>
         </div>
+      </div>
     </div>
 
-    <div class="column-visibility-container">
-        <button id="toggleColumns" class="toggle-button">
-            Visibilité des colonnes ▼
+    <!-- Score weights panel (opened by Score weights button) -->
+    <div
+      class="score-weights-container"
+      id="scoreWeightsContainer"
+      style="display: none"
+    >
+      <div class="score-weights" id="weightsPanel">
+        <div class="weight-options">
+          <label class="filter-field"
+            ><span>Volume 24h change</span
+            ><input
+              type="number"
+              id="volumeChangeWeight"
+              value="0.10"
+              step="0.05"
+              min="0"
+              max="1"
+          /></label>
+          <label class="filter-field"
+            ><span>Price 24h change</span
+            ><input
+              type="number"
+              id="priceChangeWeight"
+              value="0.10"
+              step="0.05"
+              min="0"
+              max="1"
+          /></label>
+          <label class="filter-field"
+            ><span>Volume</span
+            ><input
+              type="number"
+              id="volumeWeight"
+              value="0.15"
+              step="0.05"
+              min="0"
+              max="1"
+          /></label>
+          <label class="filter-field"
+            ><span>Liquidity</span
+            ><input
+              type="number"
+              id="liquidityWeight"
+              value="0.15"
+              step="0.05"
+              min="0"
+              max="1"
+          /></label>
+          <label class="filter-field"
+            ><span>Vol/Liq</span
+            ><input
+              type="number"
+              id="volLiqWeight"
+              value="0.20"
+              step="0.05"
+              min="0"
+              max="1"
+          /></label>
+          <label class="filter-field"
+            ><span>Vol/MC</span
+            ><input
+              type="number"
+              id="volMcWeight"
+              value="0.20"
+              step="0.05"
+              min="0"
+              max="1"
+          /></label>
+          <label class="filter-field"
+            ><span>Liq/MC</span
+            ><input
+              type="number"
+              id="liqMcWeight"
+              value="0.15"
+              step="0.05"
+              min="0"
+              max="1"
+          /></label>
+        </div>
+        <div class="weight-total">
+          Total: <span id="weightTotal">1.00</span>
+        </div>
+        <button type="button" id="applyWeights" class="btn-apply">
+          Apply weights
         </button>
-        <div class="column-toggles" id="columnsPanel" style="display: none;">
-            <div class="column-options">
-                <label><input type="checkbox" data-column="symbol" checked> Symbole</label>
-                <label><input type="checkbox" data-column="name" checked> Nom</label>
-                <label><input type="checkbox" data-column="liquidity" checked> Liquidité</label>
-                <label><input type="checkbox" data-column="volume" checked> Volume 24h</label>
-                <label><input type="checkbox" data-column="mc" checked> Market Cap</label>
-                <label><input type="checkbox" data-column="v24hChangePercent" checked> Variation Volume 24h</label>
-                <label><input type="checkbox" data-column="price_change_24h" checked> Variation Prix 24h</label>
-                <label><input type="checkbox" data-column="volume_liquidity_ratio" checked> Vol/Liq</label>
-                <label><input type="checkbox" data-column="volume_mc_ratio" checked> Vol/MC</label>
-                <label><input type="checkbox" data-column="liquidity_mc_ratio" checked> Liq/MC</label>
-                <label><input type="checkbox" data-column="performance" checked> Score</label>
-                <label><input type="checkbox" data-column="is_pump"> Pump</label>
-                <label><input type="checkbox" data-column="bubblemaps"> Bubblemaps</label>
-            </div>
-        </div>
+      </div>
     </div>
 
-    <!-- Contrôles de comparaison -->
+    <!-- Comparison -->
     <div class="comparison-controls">
-        <button id="compareButton" disabled>Comparer les tokens sélectionnés</button>
-        <span id="selectedCount">(0 sélectionné)</span>
+      <button id="compareButton" disabled>Compare selected tokens</button>
+      <span id="selectedCount">(0 selected)</span>
     </div>
-
-
-    
-
 
     {% if tokens %}
     <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th><input type="checkbox" id="selectAll"></th>
-                    <th><a href="#" data-column="symbol" onclick="sortTable('symbol'); return false;">Symbole</a></th>
-                    <th><a href="#" data-column="name" onclick="sortTable('name'); return false;">Nom</a></th>
-                    <th><a href="#" data-column="liquidity" onclick="sortTable('liquidity'); return false;">Liq. ($)</a></th>
-                    <th><a href="#" data-column="volume" onclick="sortTable('volume'); return false;">Vol. 24h ($)</a></th>
-                    <th><a href="#" data-column="mc" onclick="sortTable('mc'); return false;">MCap ($)</a></th>
-                    <th><a href="#" data-column="v24hChangePercent" onclick="sortTable('v24hChangePercent'); return false;" class="tooltip">
-                        Δ Volume (%)
-                        <span class="tooltiptext">Variation du volume sur 24h</span>
-                    </a></th>
-                    <th><a href="#" data-column="price_change_24h" onclick="sortTable('price_change_24h'); return false;" class="tooltip">
-                        Δ Prix (%)
-                        <span class="tooltiptext">Variation du prix sur 24h</span>
-                    </a></th>
-                    <th><a href="#" data-column="volume_liquidity_ratio" onclick="sortTable('volume_liquidity_ratio'); return false;" class="tooltip">
-                        Vol/Liq
-                        <span class="tooltiptext">Volume 24h / Liquidité</span>
-                    </a></th>
-                    <th><a href="#" data-column="volume_mc_ratio" onclick="sortTable('volume_mc_ratio'); return false;" class="tooltip">
-                        Vol/MC
-                        <span class="tooltiptext">Volume 24h / Market Cap</span>
-                    </a></th>
-                    <th><a href="#" data-column="liquidity_mc_ratio" onclick="sortTable('liquidity_mc_ratio'); return false;" class="tooltip">
-                        Liq/MC
-                        <span class="tooltiptext">Liquidité / Market Cap</span>
-                    </a></th>
-                    <th><a href="#" data-column="performance" onclick="sortTable('performance'); return false;" class="tooltip">
-                        Score
-                        <span class="tooltiptext">Score combiné basé sur les ratios</span>
-                    </a></th>
-                    <th>
-                        <a href="#" data-column="is_pump" onclick="sortTable('is_pump'); return false;" class="tooltip">
-                            Pump
-                            <span class="tooltiptext">Token avec adresse finissant par 'pump'</span>
-                        </a>
-                    </th>
-                    <th>
-                        <a href="#" data-column="bubblemaps" class="tooltip">
-                            Bubblemaps
-                            <span class="tooltiptext">Voir sur Bubblemaps</span>
-                        </a>
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for token in tokens %}
-                <tr>
-                    <td><input type="checkbox" class="token-select" data-address="{{ token.address }}"></td>
-                    <td style="cursor: pointer;" onclick="copyWithEffect(this, '{{ token.address }}')" title="Click to copy adress">{{ token.symbol }}</td>
-                    <td>{{ token.name }}</td>
-                    <td>{{ "{:,.0f}".format(token.liquidity).replace(',', ' ') }}</td>
-                    <td>{{ "{:,.0f}".format(token.volume).replace(',', ' ') }}</td>
-                    <td>{{ "{:,.0f}".format(token.mc).replace(',', ' ') }}</td>
-                    <td class="{{ 'positive' if token.v24hChangePercent > 0 else 'negative' }} {{ 'suspicious' if token.v24hChangePercent > 100 or token.v24hChangePercent < -50 }}">
-                        {{ "{:+.2f}%".format(token.v24hChangePercent) }}
-                    </td>
-                    <td class="{{ 'positive' if token.price_change_24h > 0 else 'negative' }} {{ 'suspicious' if token.price_change_24h > 100 or token.price_change_24h < -50 }}">
-                        {{ "{:+.2f}%".format(token.price_change_24h) }}
-                    </td>
-                    <td class="{{ 'suspicious' if token.volume_liquidity_ratio > 5 }}">
-                        {{ "{:.2f}".format(token.volume_liquidity_ratio) }}
-                    </td>
-                    <td class="{{ 'suspicious' if token.volume_mc_ratio > 3 }}">
-                        {{ "{:.2f}".format(token.volume_mc_ratio) }}
-                    </td>
-                    <td class="{{ 'suspicious' if token.liquidity_mc_ratio < 0.05 }}">
-                        {{ "{:.2f}".format(token.liquidity_mc_ratio) }}
-                    </td>
-                    <td class="{{ 'positive' if token.performance > 0 else 'negative' }}">
-                        {{ "{:+.2f}".format(token.performance) }}
-                    </td>
-                    <td style="text-align: center;">{{ "✓" if token.is_pump else "" }}</td>
-                    <td style="text-align: center;">
-                        <a href="https://app.bubblemaps.io/sol/token/{{ token.address }}" 
-                           target="_blank" 
-                           class="bubblemaps-link" 
-                           title="Voir sur Bubblemaps">
-                            🔍
-                        </a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+      <table>
+        <colgroup>
+          <col class="col-checkbox" />
+          <col class="col-symbol" />
+          <col class="col-name" />
+          <col class="col-num" />
+          <col class="col-num" />
+          <col class="col-num" />
+          <col class="col-num" />
+          <col class="col-num" />
+          <col class="col-num" />
+          <col class="col-num" />
+          <col class="col-pump" />
+          <col class="col-bubblemaps" />
+        </colgroup>
+        <thead>
+          <tr>
+            <th><input type="checkbox" id="selectAll" /></th>
+            <th>
+              <a
+                href="#"
+                data-column="symbol"
+                onclick="sortTable('symbol'); return false;"
+                >Symbol</a
+              >
+            </th>
+            <th>
+              <a
+                href="#"
+                data-column="name"
+                onclick="sortTable('name'); return false;"
+                >Name</a
+              >
+            </th>
+            <th>
+              <a
+                href="#"
+                data-column="liquidity"
+                onclick="sortTable('liquidity'); return false;"
+                >Liq. ($)</a
+              >
+            </th>
+            <th>
+              <a
+                href="#"
+                data-column="volume"
+                onclick="sortTable('volume'); return false;"
+                >Vol. 24h ($)</a
+              >
+            </th>
+            <th>
+              <a
+                href="#"
+                data-column="mc"
+                onclick="sortTable('mc'); return false;"
+                >MCap ($)</a
+              >
+            </th>
+            <th>
+              <a
+                href="#"
+                data-column="v24hChangePercent"
+                onclick="sortTable('v24hChangePercent'); return false;"
+                class="tooltip"
+              >
+                Δ Volume (%)
+                <span class="tooltiptext">24h volume change</span>
+              </a>
+            </th>
+            <th>
+              <a
+                href="#"
+                data-column="volume_liquidity_ratio"
+                onclick="sortTable('volume_liquidity_ratio'); return false;"
+                class="tooltip"
+              >
+                Vol/Liq
+                <span class="tooltiptext">Volume 24h / Liquidity</span>
+              </a>
+            </th>
+            <th>
+              <a
+                href="#"
+                data-column="volume_mc_ratio"
+                onclick="sortTable('volume_mc_ratio'); return false;"
+                class="tooltip"
+              >
+                Vol/MC
+                <span class="tooltiptext">Volume 24h / Market Cap</span>
+              </a>
+            </th>
+            <th>
+              <a
+                href="#"
+                data-column="liquidity_mc_ratio"
+                onclick="sortTable('liquidity_mc_ratio'); return false;"
+                class="tooltip"
+              >
+                Liq/MC
+                <span class="tooltiptext">Liquidity / Market Cap</span>
+              </a>
+            </th>
+            <th>
+              <a
+                href="#"
+                data-column="is_pump"
+                onclick="sortTable('is_pump'); return false;"
+                class="tooltip"
+              >
+                Pump
+                <span class="tooltiptext"
+                  >Token with address ending in 'pump'</span
+                >
+              </a>
+            </th>
+            <th>
+              <a href="#" data-column="bubblemaps" class="tooltip">
+                Bubblemaps
+                <span class="tooltiptext">View on Bubblemaps</span>
+              </a>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for token in tokens %}
+          <tr>
+            <td>
+              <input
+                type="checkbox"
+                class="token-select"
+                data-address="{{ token.address }}"
+              />
+            </td>
+            <td class="token-link-cell">
+              <a
+                href="https://gmgn.ai/sol/token/{{ token.address }}"
+                target="_blank"
+                rel="noopener"
+                class="token-link"
+                title="View on GMGN"
+                >{{ token.symbol }}{{ '</a
+              >' | safe }}<button
+                type="button"
+                class="copy-btn"
+                onclick="event.preventDefault(); copyWithEffect(this, '{{ token.address }}');"
+                title="Copy address"
+              >
+                &#9112;
+              </button>
+            </td>
+            <td class="token-name-cell">
+              <a
+                href="https://gmgn.ai/sol/token/{{ token.address }}"
+                target="_blank"
+                rel="noopener"
+                class="token-link"
+                title="View on GMGN"
+                >{{ token.name }}{{ '</a
+              >' | safe }}
+            </td>
+            <td>{{ "{:,.0f}".format(token.liquidity).replace(',', ' ') }}</td>
+            <td>{{ "{:,.0f}".format(token.volume).replace(',', ' ') }}</td>
+            <td>{{ "{:,.0f}".format(token.mc).replace(',', ' ') }}</td>
+            <td
+              class="{{ 'positive' if token.v24hChangePercent > 0 else 'negative' }} {{ 'suspicious' if token.v24hChangePercent > 100 or token.v24hChangePercent < -50 }}"
+            >
+              {{ "{:+.2f}%".format(token.v24hChangePercent) }}
+            </td>
+            <td class="{{ 'suspicious' if token.volume_liquidity_ratio > 5 }}">
+              {{ "{:.2f}".format(token.volume_liquidity_ratio) }}
+            </td>
+            <td class="{{ 'suspicious' if token.volume_mc_ratio > 3 }}">
+              {{ "{:.2f}".format(token.volume_mc_ratio) }}
+            </td>
+            <td class="{{ 'suspicious' if token.liquidity_mc_ratio < 0.05 }}">
+              {{ "{:.2f}".format(token.liquidity_mc_ratio) }}
+            </td>
+            <td style="text-align: center">
+              {{ "✓" if token.is_pump else "" }}
+            </td>
+            <td style="text-align: center">
+              <a
+                href="https://app.bubblemaps.io/sol/token/{{ token.address }}"
+                target="_blank"
+                class="bubblemaps-link"
+                title="View on Bubblemaps"
+              >
+                🔍
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
     {% else %}
-        <p>Aucune donnée de token disponible.</p>
+    <p>No token data available.</p>
     {% endif %}
 
     <!-- Modal de comparaison -->
     <div id="comparisonModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Comparaison des tokens</h2>
-            <div id="comparisonTable"></div>
-        </div>
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Token comparison</h2>
+        <div id="comparisonTable"></div>
+      </div>
     </div>
 
     <!-- Script -->
     <script src="{{ url_for('static', filename='js/utils.js') }}"></script>
     <script src="{{ url_for('static', filename='js/search.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/columnVisibility.js') }}"></script>
     <script src="{{ url_for('static', filename='js/filters.js') }}"></script>
     <script src="{{ url_for('static', filename='js/comparison.js') }}"></script>
     <script src="{{ url_for('static', filename='js/sorting.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script>
-        function refreshCache() {
-            fetch('/refresh-cache')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        location.reload();  // Recharger la page
-                    } else {
-                        alert('Erreur lors du rafraîchissement: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur:', error);
-                    alert('Erreur lors du rafraîchissement des données');
-                });
-        }
+      function refreshCache() {
+        fetch("/refresh-cache")
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              location.reload();
+            } else {
+              alert("Refresh error: " + data.error);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("Error refreshing data");
+          });
+      }
     </script>
-</body>
+  </body>
 </html>

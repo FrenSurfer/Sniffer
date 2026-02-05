@@ -5,7 +5,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 def safe_division(a, b, default=0.0):
-    """Effectue une division sécurisée en gérant les cas particuliers"""
+    """Safe division handling edge cases"""
     try:
         with np.errstate(divide='ignore', invalid='ignore'):
             result = np.where(b != 0, a / b, default)
@@ -14,7 +14,7 @@ def safe_division(a, b, default=0.0):
         return default
 
 def process_token_list(tokens):
-    """Traite la liste des tokens pour l'affichage en ne gardant que les données essentielles"""
+    """Process token list for display, keeping only essential data"""
     processed_data = []
     
     for token in tokens:
@@ -39,20 +39,14 @@ def process_token_list(tokens):
         processed_data.append(processed_token)
     
     df = pd.DataFrame(processed_data)
-    
-    # Calcul des ratios avec gestion des cas particuliers
     df['volume_liquidity_ratio'] = safe_division(df['volume'], df['liquidity'])
     df['volume_mc_ratio'] = safe_division(df['volume'], df['mc'])
     df['liquidity_mc_ratio'] = safe_division(df['liquidity'], df['mc'])
-    
-    # Calcul du score de performance (exemple simple)
     df['performance'] = (
         df['volume_liquidity_ratio'] * 0.4 +
         df['volume_mc_ratio'] * 0.4 +
         df['liquidity_mc_ratio'] * 0.2
     )
-    
-    # S'assurer que toutes les colonnes numériques sont de type float
     numeric_columns = ['volume', 'liquidity', 'mc', 'price_change_24h', 
                       'v24hChangePercent', 'volume_liquidity_ratio', 
                       'volume_mc_ratio', 'liquidity_mc_ratio', 'performance']
