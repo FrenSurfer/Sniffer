@@ -94,10 +94,6 @@ class ComparisonManager {
       ["vol-liq", "Vol/Liq"],
       ["vol-mc", "Vol/MC"],
       ["liq-mc", "Liq/MC"],
-      ["score", "Score"],
-      ["holders", "Holders"],
-      ["wallets", "Wallets 24h"],
-      ["wallet-change", "Δ Wallets"],
     ];
 
     return `
@@ -163,37 +159,6 @@ class ComparisonManager {
         "liq-mc",
         "Liq/MC Ratio",
         (t) => `<td>${t.liquidity_mc_ratio.toFixed(2)}</td>`,
-      ],
-      [
-        "score",
-        "Score",
-        (t) =>
-          `<td class="${
-            t.performance > 0 ? "positive" : "negative"
-          }">${t.performance.toFixed(2)}</td>`,
-      ],
-      [
-        "holders",
-        "Holders",
-        (t) =>
-          `<td>${(t.holders != null ? t.holders : 0).toLocaleString()}</td>`,
-      ],
-      [
-        "wallets",
-        "Wallets 24h",
-        (t) =>
-          `<td>${(t.unique_wallets_24h != null
-            ? t.unique_wallets_24h
-            : 0
-          ).toLocaleString()}</td>`,
-      ],
-      [
-        "wallet-change",
-        "Δ Wallets (%)",
-        (t) =>
-          `<td class="${
-            (t.wallet_change || 0) > 0 ? "positive" : "negative"
-          }">${(t.wallet_change || 0).toFixed(2)}%</td>`,
       ],
     ];
 
