@@ -31,11 +31,6 @@
           ✕
         </button>
       </div>
-      <div class="controls-toggles">
-        <button id="toggleWeights" class="toggle-button toggle-btn-sm">
-          Score weights ▼
-        </button>
-      </div>
     </div>
 
     <!-- Filters panel: one card with clear sections -->
@@ -205,94 +200,6 @@
             </label>
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Score weights panel (opened by Score weights button) -->
-    <div
-      class="score-weights-container"
-      id="scoreWeightsContainer"
-      style="display: none"
-    >
-      <div class="score-weights" id="weightsPanel">
-        <div class="weight-options">
-          <label class="filter-field"
-            ><span>Volume 24h change</span
-            ><input
-              type="number"
-              id="volumeChangeWeight"
-              value="0.10"
-              step="0.05"
-              min="0"
-              max="1"
-          /></label>
-          <label class="filter-field"
-            ><span>Price 24h change</span
-            ><input
-              type="number"
-              id="priceChangeWeight"
-              value="0.10"
-              step="0.05"
-              min="0"
-              max="1"
-          /></label>
-          <label class="filter-field"
-            ><span>Volume</span
-            ><input
-              type="number"
-              id="volumeWeight"
-              value="0.15"
-              step="0.05"
-              min="0"
-              max="1"
-          /></label>
-          <label class="filter-field"
-            ><span>Liquidity</span
-            ><input
-              type="number"
-              id="liquidityWeight"
-              value="0.15"
-              step="0.05"
-              min="0"
-              max="1"
-          /></label>
-          <label class="filter-field"
-            ><span>Vol/Liq</span
-            ><input
-              type="number"
-              id="volLiqWeight"
-              value="0.20"
-              step="0.05"
-              min="0"
-              max="1"
-          /></label>
-          <label class="filter-field"
-            ><span>Vol/MC</span
-            ><input
-              type="number"
-              id="volMcWeight"
-              value="0.20"
-              step="0.05"
-              min="0"
-              max="1"
-          /></label>
-          <label class="filter-field"
-            ><span>Liq/MC</span
-            ><input
-              type="number"
-              id="liqMcWeight"
-              value="0.15"
-              step="0.05"
-              min="0"
-              max="1"
-          /></label>
-        </div>
-        <div class="weight-total">
-          Total: <span id="weightTotal">1.00</span>
-        </div>
-        <button type="button" id="applyWeights" class="btn-apply">
-          Apply weights
-        </button>
       </div>
     </div>
 

@@ -1,8 +1,12 @@
+import os
 from flask import Flask, render_template, request, jsonify
+from dotenv import load_dotenv
 from api_client import BirdeyeAPIClient
 from data_processor import process_token_list
 import logging
 from apscheduler.schedulers.background import BackgroundScheduler
+
+load_dotenv()
 
 # Logging configuration
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -11,7 +15,9 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__)
 
 # Config
-api_key = "77e7ad01541f415d99238b246b59294f"
+api_key = os.getenv("API_KEY")
+if not api_key:
+	raise ValueError("API_KEY not set in .env")
 client = BirdeyeAPIClient(api_key)
 token_data = []
 

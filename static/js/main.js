@@ -41,15 +41,6 @@ class AppManager {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const weightsBtn = document.getElementById("toggleWeights");
-  const weightsContainer = document.getElementById("scoreWeightsContainer");
-  if (weightsBtn && weightsContainer) {
-    weightsBtn.addEventListener("click", () => {
-      const isVisible = weightsContainer.style.display === "none";
-      weightsContainer.style.display = isVisible ? "block" : "none";
-      weightsBtn.textContent = "Score weights " + (isVisible ? "▲" : "▼");
-    });
-  }
   setTimeout(() => {
     window.appManager = new AppManager();
     window.filterManager.applyFilters();
